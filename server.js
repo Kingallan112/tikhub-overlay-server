@@ -165,6 +165,22 @@ app.post('/event/follow', (req, res) => {
     const followData = req.body;
     console.log('❤️ Received follow event:', followData);
     
+    // Update follow goal state
+    if (!storage.state.followGoal) {
+        storage.state.followGoal = { current: 0, goal: 50 };
+    }
+    storage.state.followGoal.current = (storage.state.followGoal.current || 0) + 1;
+    
+    // Broadcast to follow goal overlay with expected format
+    broadcast('followGoal', { 
+        type: 'update', 
+        payload: { 
+            type: 'follow',
+            count: storage.state.followGoal.current,
+            ...followData 
+        } 
+    });
+    
     broadcastAll({ type: 'tiktok-event', event: { type: 'follow', ...followData } });
     
     res.json({ success: true, message: 'Follow event broadcasted' });
@@ -174,7 +190,23 @@ app.post('/event/like', (req, res) => {
     const likeData = req.body;
     console.log('👍 Received like event:', likeData);
     
-    broadcast('likeGoal', { type: 'like', ...likeData });
+    // Update like goal state
+    if (!storage.state.likeGoal) {
+        storage.state.likeGoal = { current: 0, goal: 100 };
+    }
+    const likeCount = likeData.likeCount || likeData.count || 1;
+    storage.state.likeGoal.current = (storage.state.likeGoal.current || 0) + likeCount;
+    
+    // Broadcast to like goal overlay with expected format
+    broadcast('likeGoal', { 
+        type: 'update', 
+        payload: { 
+            type: 'like',
+            count: storage.state.likeGoal.current,
+            ...likeData 
+        } 
+    });
+    
     broadcastAll({ type: 'tiktok-event', event: { type: 'like', ...likeData } });
     
     res.json({ success: true, message: 'Like event broadcasted' });
@@ -274,15 +306,45 @@ app.post('/overlay/songrequest/update', (req, res) => {
 
 // Like Goal
 app.post('/overlay/likegoal/update', (req, res) => {
-    storage.state.likeGoal = req.body;
-    broadcast('likeGoal', { type: 'like-goal-update', ...req.body });
+    const config = req.body;
+    
+    // Merge with existing state to preserve count
+    storage.state.likeGoal = {
+        ...storage.state.likeGoal,
+        ...config,
+        current: config.count !== undefined ? config.count : (storage.state.likeGoal?.current || 0)
+    };
+    
+    broadcast('likeGoal', { 
+        type: 'update', 
+        payload: { 
+            type: 'like',
+            ...storage.state.likeGoal 
+        } 
+    });
+    
     res.json({ success: true, message: 'Like goal updated' });
 });
 
 // Follow Goal
 app.post('/overlay/followgoal/update', (req, res) => {
-    storage.state.followGoal = req.body;
-    broadcast('followGoal', { type: 'follow-goal-update', ...req.body });
+    const config = req.body;
+    
+    // Merge with existing state to preserve count
+    storage.state.followGoal = {
+        ...storage.state.followGoal,
+        ...config,
+        current: config.count !== undefined ? config.count : (storage.state.followGoal?.current || 0)
+    };
+    
+    broadcast('followGoal', { 
+        type: 'update', 
+        payload: { 
+            type: 'follow',
+            ...storage.state.followGoal 
+        } 
+    });
+    
     res.json({ success: true, message: 'Follow goal updated' });
 });
 
