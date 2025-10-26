@@ -328,7 +328,7 @@
         const overlay = new RealBubbleOverlay();
 
         // Connect to WebSocket for real gift events
-        const OVERLAY_SERVER_URL = 'wss://your-overlay-server.onrender.com';
+        const OVERLAY_SERVER_URL = 'wss://tikhub-overlay-server.onrender.com';
         const ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/gift-bubbles');
         
         ws.onopen = () => {
