@@ -20,6 +20,7 @@ const storage = {
     clients: {
         giftBubbles: new Set(),
         luckyWheel: new Set(),
+        luckyWheel2: new Set(),
         songRequest: new Set(),
         likeGoal: new Set(),
         followGoal: new Set(),
@@ -73,6 +74,7 @@ app.get('/ping', (req, res) => {
         activeClients: {
             giftBubbles: storage.clients.giftBubbles.size,
             luckyWheel: storage.clients.luckyWheel.size,
+            luckyWheel2: storage.clients.luckyWheel2.size,
             songRequest: storage.clients.songRequest.size,
             likeGoal: storage.clients.likeGoal.size,
             followGoal: storage.clients.followGoal.size,
@@ -217,6 +219,18 @@ app.post('/overlay/luckywheel/spin', (req, res) => {
     res.json({ success: true, message: 'Lucky wheel spin broadcasted' });
 });
 
+// Lucky Wheel 2
+app.post('/overlay/luckywheel2/config', (req, res) => {
+    storage.state.luckyWheel2 = req.body.config;
+    broadcast('luckyWheel2', { type: 'wheel2-config-update', config: req.body.config });
+    res.json({ success: true, message: 'Lucky wheel 2 config updated' });
+});
+
+app.post('/overlay/luckywheel2/spin', (req, res) => {
+    broadcast('luckyWheel2', { type: 'wheel2-spin', ...req.body });
+    res.json({ success: true, message: 'Lucky wheel 2 spin broadcasted' });
+});
+
 // Song Requests
 app.post('/overlay/songrequest/add', (req, res) => {
     const request = req.body;
@@ -320,6 +334,8 @@ wss.on('connection', (ws, req) => {
     
     if (path.includes('/gift-bubbles') || path.includes('/giftbubbles')) {
         overlayType = 'giftBubbles';
+    } else if (path.includes('/luckywheel2') || path.includes('/wheel2')) {
+        overlayType = 'luckyWheel2';
     } else if (path.includes('/luckywheel') || path.includes('/wheel')) {
         overlayType = 'luckyWheel';
     } else if (path.includes('/songrequest') || path.includes('/song')) {
@@ -389,6 +405,8 @@ app.use('*', (req, res) => {
             "POST /broadcast-event",
             "POST /overlay/luckywheel/config",
             "POST /overlay/luckywheel/spin",
+            "POST /overlay/luckywheel2/config",
+            "POST /overlay/luckywheel2/spin",
             "POST /overlay/songrequest/add",
             "POST /overlay/songrequest/update",
             "POST /overlay/likegoal/update",
@@ -398,6 +416,7 @@ app.use('*', (req, res) => {
             "GET /state/:overlayType",
             "WebSocket: /ws/gift-bubbles",
             "WebSocket: /ws/luckywheel",
+            "WebSocket: /ws/luckywheel2",
             "WebSocket: /ws/songrequests",
             "WebSocket: /ws/like-goal",
             "WebSocket: /ws/follow-goal",
