@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Streak Overlay - TikHub</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        .overlay-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+        }
+        
+        .streak-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 200px;
+            background: transparent;
+            font-family: 'Comic Sans MS', cursive;
+            color: #fff;
+        }
+        
+        .gift-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #242424;
+            z-index: 2;
+        }
+        
+        .username {
+            position: absolute;
+            top: 125px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #242424;
+            z-index: 2;
+        }
+        
+        .streak-count {
+            position: absolute;
+            top: 165px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 22px;
+            color: #ffd700;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #242424;
+            z-index: 2;
+            transition: transform 0.3s ease-out, filter 0.3s ease-out;
+        }
+        
+        .streak-count.animating {
+            transform: translateX(-50%) scale(1.2);
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+        }
+        
+        .connection-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay-container">
+        <div class="streak-overlay" id="streakOverlay" style="display: none;">
+            <div class="gift-image" id="giftImage"></div>
+            <div class="title" id="title">Top Streak</div>
+            <div class="username" id="username">StreamQueen</div>
+            <div class="streak-count" id="streakCount">X 12</div>
+        </div>
+        
+        <div class="connection-status" id="connectionStatus">
+            Connecting to stream...
+        </div>
+    </div>
+
+    <script>
+        let topStreak = null;
+        let isConnected = false;
+        let streakData = new Map(); // Track streaks by user+gift combination
+        let displayCount = 0;
+        let isAnimating = false;
+        let animationId = null;
+
+        // Animation function for counting up
+        function animateCount(from, to) {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            isAnimating = true;
+            const duration = 800; // Animation duration in ms
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function for smooth animation
+                function easeOutBounce(t) {
+                    if (t < 1 / 2.75) {
+                        return 7.5625 * t * t;
+                    } else if (t < 2 / 2.75) {
+                        return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+                    } else if (t < 2.5 / 2.75) {
+                        return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+                    } else {
+                        return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+                    }
+                }
+                
+                const easedProgress = easeOutBounce(progress);
+                const currentCount = Math.round(from + (to - from) * easedProgress);
+                displayCount = currentCount;
+                
+                // Update the display
+                const streakCountElement = document.getElementById('streakCount');
+                if (streakCountElement) {
+                    streakCountElement.textContent = `X ${displayCount}`;
+                }
+                
+                if (progress < 1) {
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    isAnimating = false;
+                    displayCount = to;
+                    streakCountElement.textContent = `X ${displayCount}`;
+                }
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Connect to WebSocket for real-time gift data
+        const OVERLAY_SERVER_URL = 'wss://your-overlay-server.onrender.com';
+        const ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/top-streak');
+        
+        ws.onopen = () => {
+            console.log('Connected to streak overlay WebSocket');
+            isConnected = true;
+            updateConnectionStatus('Waiting for gift streaks...');
+        };
+
+        // Combo aggregation keyed by groupId for final streak display
+        const comboGroups = new Map(); // groupId -> { lastCount, timeoutId, username, giftName, giftImage }
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'gift' && data.giftData) {
+                    const g = data.giftData;
+                    const isStreakable = Number(g.giftType) === 1;
+                    const groupId = g.groupId || 'single';
+                    const count = Number(g.repeatCount || 1);
+
+                    if (!isStreakable) {
+                        // Non-streak: treat as final count immediately
+                        const previousCount = topStreak ? topStreak.count : 0;
+                        topStreak = {
+                            username: g.username || g.nickname || 'Anonymous',
+                            giftName: g.giftName,
+                            giftImage: g.giftImage,
+                            count: count,
+                            timestamp: Date.now()
+                        };
+                        animateCount(previousCount, count);
+                        updateOverlay();
+                        return;
+                    }
+
+                    // Streakable: aggregate by groupId and finalize on repeatEnd or timeout
+                    let entry = comboGroups.get(groupId);
+                    if (!entry) {
+                        entry = { lastCount: 0, timeoutId: null, username: g.username || g.nickname || 'Anonymous', giftName: g.giftName, giftImage: g.giftImage };
+                        comboGroups.set(groupId, entry);
+                    }
+                    entry.lastCount = Math.max(entry.lastCount || 0, count);
+                    entry.username = entry.username || g.username || g.nickname || 'Anonymous';
+                    entry.giftName = entry.giftName || g.giftName;
+                    entry.giftImage = entry.giftImage || g.giftImage;
+                    if (entry.timeoutId) clearTimeout(entry.timeoutId);
+                    entry.timeoutId = setTimeout(() => {
+                        const e = comboGroups.get(groupId);
+                        if (!e) return;
+                        const previousCount = topStreak ? topStreak.count : 0;
+                        const finalCount = e.lastCount || count || 1;
+                        topStreak = {
+                            username: e.username,
+                            giftName: e.giftName,
+                            giftImage: e.giftImage,
+                            count: finalCount,
+                            timestamp: Date.now()
+                        };
+                        animateCount(previousCount, finalCount);
+                        updateOverlay();
+                        comboGroups.delete(groupId);
+                    }, 1200);
+
+                    if (g.repeatEnd === true) {
+                        clearTimeout(entry.timeoutId);
+                        const previousCount = topStreak ? topStreak.count : 0;
+                        const finalCount = entry.lastCount || count || 1;
+                        topStreak = {
+                            username: entry.username,
+                            giftName: entry.giftName,
+                            giftImage: entry.giftImage,
+                            count: finalCount,
+                            timestamp: Date.now()
+                        };
+                        animateCount(previousCount, finalCount);
+                        updateOverlay();
+                        comboGroups.delete(groupId);
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing streak data:', error);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log('Disconnected from streak overlay WebSocket');
+            isConnected = false;
+            updateConnectionStatus('Disconnected from stream');
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            isConnected = false;
+            updateConnectionStatus('Connection error');
+        };
+
+        function updateOverlay() {
+            if (!topStreak) return;
+
+            const streakOverlay = document.getElementById('streakOverlay');
+            const giftImage = document.getElementById('giftImage');
+            const title = document.getElementById('title');
+            const username = document.getElementById('username');
+            const streakCount = document.getElementById('streakCount');
+
+            // Update gift image
+            giftImage.style.backgroundImage = `url(${topStreak.giftImage})`;
+            
+            // Update text content
+            username.textContent = topStreak.username;
+            
+            // Update streak count with animation class
+            if (isAnimating) {
+                streakCount.classList.add('animating');
+            } else {
+                streakCount.classList.remove('animating');
+            }
+
+            // Show overlay
+            streakOverlay.style.display = 'block';
+            document.getElementById('connectionStatus').style.display = 'none';
+        }
+
+        function updateConnectionStatus(message) {
+            const status = document.getElementById('connectionStatus');
+            status.textContent = message;
+            status.style.display = 'block';
+            document.getElementById('streakOverlay').style.display = 'none';
+        }
+
+        // Load settings from URL parameters or localStorage
+        function loadSettings() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Apply custom settings if provided
+            const title = urlParams.get('title') || 'Top Streak';
+            const titleSize = urlParams.get('titleSize') || '18';
+            const usernameSize = urlParams.get('usernameSize') || '32';
+            const fontSize = urlParams.get('fontSize') || '22';
+            const titleColor = urlParams.get('titleColor') || '#ffffff';
+            const usernameColor = urlParams.get('usernameColor') || '#ffffff';
+            const counterColor = urlParams.get('counterColor') || '#ffd700';
+            const fontFamily = urlParams.get('fontFamily') || 'Comic Sans MS';
+            const giftImageOpacity = urlParams.get('giftImageOpacity') || '100';
+
+            // Apply settings to elements
+            document.getElementById('title').textContent = title;
+            document.getElementById('title').style.fontSize = titleSize + 'px';
+            document.getElementById('username').style.fontSize = usernameSize + 'px';
+            document.getElementById('streakCount').style.fontSize = fontSize + 'px';
+            document.getElementById('title').style.color = titleColor;
+            document.getElementById('username').style.color = usernameColor;
+            document.getElementById('streakCount').style.color = counterColor;
+            
+            // Apply font family to all text elements
+            const textElements = document.querySelectorAll('.title, .username, .streak-count');
+            textElements.forEach(el => {
+                el.style.fontFamily = fontFamily;
+            });
+
+            // Apply gift image opacity
+            document.getElementById('giftImage').style.opacity = giftImageOpacity / 100;
+        }
+
+        // Load settings when page loads
+        loadSettings();
+    </script>
+</body>
+</html>

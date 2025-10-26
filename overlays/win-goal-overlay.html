@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Win Goal Overlay</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #win-goal {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0004;
+      margin-top: 0;
+      font-family: Arial, sans-serif;
+      font-size: 48px;
+      color: #fff;
+      padding: 18px 36px;
+      background: #23262f;
+      border: none;
+      transition: all 0.2s;
+    }
+    #win-goal .icon {
+      width: 44px;
+      height: 44px;
+      filter: drop-shadow(0 0 8px #ffe06688);
+      display: block;
+      transform-origin: center center;
+      animation: slowPop 3s ease-in-out infinite;
+    }
+    @keyframes slowPop {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    #win-goal .label {
+      font-weight: bold;
+      font-size: 48px;
+      letter-spacing: 2px;
+      margin-right: 8px;
+    }
+    #win-goal .counter {
+      font-weight: 900;
+      font-size: 54px;
+      background: #2a2a2d;
+      border-radius: 8px;
+      padding: 0 18px;
+      margin: 0 8px;
+      display: flex;
+      align-items: center;
+    }
+    #win-goal .slash {
+      font-size: 44px;
+      margin: 0 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="win-goal">
+    <img class="icon" src="/assets/overlay-icons/win game.png" alt="Win" />
+    <span class="label">Win</span>
+    <span class="counter"><span id="win-count">0</span> <span class="slash">/</span> <span id="win-goal-num">5</span></span>
+  </div>
+  <script>
+    async function updateWinGoal() {
+      try {
+        const res = await fetch('/api/update-wingoal', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        
+        // Update the overlay with the data
+        document.getElementById('win-count').textContent = String(data.current ?? '0');
+        document.getElementById('win-goal-num').textContent = String(data.total ?? '5');
+        
+        // Apply any custom styles
+        const el = document.getElementById('win-goal');
+        if (data.style) {
+          el.style.background = data.style.backgroundColor || '#23262f';
+          el.style.fontFamily = data.style.font || 'Arial, sans-serif';
+          el.style.fontSize = data.style.fontSize ? data.style.fontSize + 'px' : '48px';
+          el.style.color = data.style.winTextColor || '#fff';
+          el.style.border = data.style.enableFontBorder ? `2px solid ${data.style.borderColor || '#000'}` : 'none';
+          // If later we support selecting different PNGs, update the image src here
+          el.querySelector('.label').textContent = data.style.winGameText || 'Win';
+          el.querySelector('.counter').style.background = data.style.counterBackgroundColor || '#2a2a2d';
+          el.querySelector('.counter').style.color = data.style.counterColor || '#fff';
+          el.querySelector('.slash').style.color = data.style.winTextColor || '#fff';
+        }
+      } catch (error) {
+        console.error('Error fetching win goal data:', error);
+      }
+    }
+
+    // Update immediately and then every 2 seconds
+    updateWinGoal();
+    setInterval(updateWinGoal, 2000);
+  </script>
+</body>
+</html>
