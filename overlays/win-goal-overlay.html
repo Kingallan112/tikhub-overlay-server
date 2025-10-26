@@ -71,38 +71,55 @@
     <span class="counter"><span id="win-count">0</span> <span class="slash">/</span> <span id="win-goal-num">5</span></span>
   </div>
   <script>
-    async function updateWinGoal() {
-      try {
-        const res = await fetch('/api/update-wingoal', { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        
-        // Update the overlay with the data
-        document.getElementById('win-count').textContent = String(data.current ?? '0');
-        document.getElementById('win-goal-num').textContent = String(data.total ?? '5');
-        
-        // Apply any custom styles
-        const el = document.getElementById('win-goal');
-        if (data.style) {
-          el.style.background = data.style.backgroundColor || '#23262f';
-          el.style.fontFamily = data.style.font || 'Arial, sans-serif';
-          el.style.fontSize = data.style.fontSize ? data.style.fontSize + 'px' : '48px';
-          el.style.color = data.style.winTextColor || '#fff';
-          el.style.border = data.style.enableFontBorder ? `2px solid ${data.style.borderColor || '#000'}` : 'none';
-          // If later we support selecting different PNGs, update the image src here
-          el.querySelector('.label').textContent = data.style.winGameText || 'Win';
-          el.querySelector('.counter').style.background = data.style.counterBackgroundColor || '#2a2a2d';
-          el.querySelector('.counter').style.color = data.style.counterColor || '#fff';
-          el.querySelector('.slash').style.color = data.style.winTextColor || '#fff';
+    // Connect to Render overlay server via WebSocket
+    const OVERLAY_SERVER_URL = 'wss://tikhub-overlay-server.onrender.com';
+    let ws = null;
+
+    function connectWebSocket() {
+      ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/win-goal');
+      
+      ws.onopen = () => {
+        console.log('[Win Goal] ✅ Connected to Render overlay server');
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('[Win Goal] Received update:', data);
+          
+          // Update the overlay with the data
+          document.getElementById('win-count').textContent = String(data.current ?? '0');
+          document.getElementById('win-goal-num').textContent = String(data.total ?? '5');
+          
+          // Apply any custom styles
+          const el = document.getElementById('win-goal');
+          if (data.style) {
+            el.style.background = data.style.backgroundColor || '#23262f';
+            el.style.fontFamily = data.style.font || 'Arial, sans-serif';
+            el.style.fontSize = data.style.fontSize ? data.style.fontSize + 'px' : '48px';
+            el.style.color = data.style.winTextColor || '#fff';
+            el.style.border = data.style.enableFontBorder ? `2px solid ${data.style.borderColor || '#000'}` : 'none';
+            el.querySelector('.label').textContent = data.style.winGameText || 'Win';
+            el.querySelector('.counter').style.background = data.style.counterBackgroundColor || '#2a2a2d';
+            el.querySelector('.counter').style.color = data.style.counterColor || '#fff';
+            el.querySelector('.slash').style.color = data.style.winTextColor || '#fff';
+          }
+        } catch (error) {
+          console.error('[Win Goal] Error parsing message:', error);
         }
-      } catch (error) {
-        console.error('Error fetching win goal data:', error);
-      }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('[Win Goal] WebSocket error:', error);
+      };
+      
+      ws.onclose = () => {
+        console.log('[Win Goal] ⚠️ Disconnected, reconnecting in 3s...');
+        setTimeout(connectWebSocket, 3000);
+      };
     }
 
-    // Update immediately and then every 2 seconds
-    updateWinGoal();
-    setInterval(updateWinGoal, 2000);
+    connectWebSocket();
   </script>
 </body>
 </html>
