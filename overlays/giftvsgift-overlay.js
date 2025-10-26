@@ -29408,6 +29408,12 @@ const goalBehaviors = [
     { value: 'hide', label: 'Hide the Goal' },
 ];
 const GiftVsGiftOverlay = ({ editor = false, actions = [], triggerAction, refreshTrigger }) => {
+    // Use Render overlay server or fallback to localhost for development
+    const OVERLAY_SERVER = typeof window !== 'undefined' && window.location.hostname === 'tikhub-overlay-server.onrender.com'
+        ? 'https://tikhub-overlay-server.onrender.com'
+        : 'http://localhost:3002';
+    const WS_PROTOCOL = OVERLAY_SERVER.startsWith('https') ? 'wss' : 'ws';
+    const WS_SERVER = OVERLAY_SERVER.replace(/^https?:/, '');
     const [leftGift, setLeftGift] = (0, react_1.useState)(availableGifts_generated_1.availableGifts[0]);
     const [rightGift, setRightGift] = (0, react_1.useState)(availableGifts_generated_1.availableGifts[1]);
     const [leftPoints, setLeftPoints] = (0, react_1.useState)(0);
@@ -29449,7 +29455,7 @@ const GiftVsGiftOverlay = ({ editor = false, actions = [], triggerAction, refres
             return;
         }
         const timeout = setTimeout(() => {
-            fetch('http://localhost:3002/api/giftvsgift', {
+            fetch(`${OVERLAY_SERVER}/api/giftvsgift`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -29482,7 +29488,7 @@ const GiftVsGiftOverlay = ({ editor = false, actions = [], triggerAction, refres
         }
         console.log('[GiftVsGift] Connecting to WebSocket for live gift events');
         // Force explicit localhost URL to avoid CSP issues
-        const wsUrl = 'ws://localhost:3002/ws/ws/giftvsgift';
+        const wsUrl = `${WS_PROTOCOL}:${WS_SERVER}/ws/giftvsgift`;
         console.log('[GiftVsGift] WebSocket URL:', wsUrl);
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
