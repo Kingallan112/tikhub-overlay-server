@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>TikHub - Chat Overlay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            background: transparent;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #chat-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 500px;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-message {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-left: 4px solid #66bfff;
+            animation: slide-in 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-message.gift {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        .chat-message.follow {
+            border-left-color: #ff6b9d;
+            background: rgba(255, 107, 157, 0.15);
+        }
+
+        .chat-message.like {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.15);
+        }
+
+        .username {
+            font-weight: bold;
+            color: #66bfff;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .message-content {
+            color: white;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message-icon {
+            display: inline-block;
+            margin-right: 6px;
+            font-size: 18px;
+        }
+
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slide-out {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+        }
+
+        .chat-message.removing {
+            animation: slide-out 0.3s ease-out forwards;
+        }
+
+        #connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 10000;
+        }
+
+        #connection-status.connected {
+            background: rgba(0, 200, 0, 0.7);
+        }
+
+        #connection-status.disconnected {
+            background: rgba(200, 0, 0, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div id="connection-status">Connecting...</div>
+    <div id="chat-container"></div>
+
+    <script>
+        // Configuration - CHANGE THIS TO YOUR RENDER.COM URL
+        const OVERLAY_SERVER_URL = 'wss://your-overlay-server.onrender.com';
+        const WS_PATH = '/ws/chat';
+        
+        let ws = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 10;
+        const MAX_MESSAGES = 10;
+        const MESSAGE_LIFETIME = 15000; // 15 seconds
+        
+        const statusEl = document.getElementById('connection-status');
+        const chatContainer = document.getElementById('chat-container');
+        
+        // Connect to WebSocket
+        function connect() {
+            try {
+                ws = new WebSocket(OVERLAY_SERVER_URL + WS_PATH);
+                
+                ws.onopen = () => {
+                    console.log('✅ Connected to TikHub Overlay Server');
+                    statusEl.textContent = 'Connected';
+                    statusEl.className = 'connected';
+                    reconnectAttempts = 0;
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('📥 Received:', data);
+                        
+                        if (data.type === 'tiktok-event') {
+                            handleEvent(data.event);
+                        } else if (data.type === 'chat') {
+                            addChatMessage(data);
+                        } else if (data.type === 'gift') {
+                            addGiftMessage(data.giftData || data);
+                        } else if (data.type === 'follow') {
+                            addFollowMessage(data);
+                        } else if (data.type === 'like') {
+                            addLikeMessage(data);
+                        }
+                    } catch (error) {
+                        console.error('Error processing message:', error);
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    statusEl.textContent = 'Error';
+                    statusEl.className = 'disconnected';
+                };
+                
+                ws.onclose = () => {
+                    console.log('❌ Disconnected from server');
+                    statusEl.textContent = 'Disconnected';
+                    statusEl.className = 'disconnected';
+                    
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                        console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+                        setTimeout(connect, delay);
+                    }
+                };
+            } catch (error) {
+                console.error('Failed to create WebSocket:', error);
+            }
+        }
+        
+        // Handle different event types
+        function handleEvent(event) {
+            switch (event.type) {
+                case 'chat':
+                    addChatMessage(event);
+                    break;
+                case 'gift':
+                    addGiftMessage(event);
+                    break;
+                case 'follow':
+                    addFollowMessage(event);
+                    break;
+                case 'like':
+                    addLikeMessage(event);
+                    break;
+                case 'share':
+                    addShareMessage(event);
+                    break;
+                case 'subscribe':
+                    addSubscribeMessage(event);
+                    break;
+            }
+        }
+        
+        // Add chat message
+        function addChatMessage(data) {
+            const username = data.uniqueId || data.username || data.nickname || 'Anonymous';
+            const message = data.comment || data.message || '';
+            
+            const messageEl = createMessage(username, `💬 ${message}`, 'chat');
+            addToContainer(messageEl);
+        }
+        
+        // Add gift message
+        function addGiftMessage(data) {
+            const username = data.uniqueId || data.username || data.nickname || 'Anonymous';
+            const giftName = data.giftName || 'Gift';
+            const repeatCount = data.repeatCount || 1;
+            const text = repeatCount > 1 ? `${giftName} x${repeatCount}` : giftName;
+            
+            const messageEl = createMessage(username, `🎁 ${text}`, 'gift');
+            addToContainer(messageEl);
+        }
+        
+        // Add follow message
+        function addFollowMessage(data) {
+            const username = data.uniqueId || data.username || data.nickname || 'Anonymous';
+            
+            const messageEl = createMessage(username, `❤️ Followed!`, 'follow');
+            addToContainer(messageEl);
+        }
+        
+        // Add like message
+        function addLikeMessage(data) {
+            const username = data.uniqueId || data.username || data.nickname || 'Anonymous';
+            const likeCount = data.likeCount || data.count || 1;
+            
+            const messageEl = createMessage(username, `👍 +${likeCount} likes`, 'like');
+            addToContainer(messageEl);
+        }
+        
+        // Add share message
+        function addShareMessage(data) {
+            const username = data.uniqueId || data.username || data.nickname || 'Anonymous';
+            
+            const messageEl = createMessage(username, `📤 Shared the stream!`, 'chat');
+            addToContainer(messageEl);
+        }
+        
+        // Add subscribe message
+        function addSubscribeMessage(data) {
+            const username = data.uniqueId || data.username || data.nickname || 'Anonymous';
+            const tier = data.tier || 1;
+            
+            const messageEl = createMessage(username, `⭐ Subscribed (Tier ${tier})!`, 'gift');
+            addToContainer(messageEl);
+        }
+        
+        // Create message element
+        function createMessage(username, content, type = 'chat') {
+            const messageEl = document.createElement('div');
+            messageEl.className = `chat-message ${type}`;
+            messageEl.innerHTML = `
+                <div class="username">${username}</div>
+                <div class="message-content">${content}</div>
+            `;
+            return messageEl;
+        }
+        
+        // Add to container
+        function addToContainer(messageEl) {
+            chatContainer.appendChild(messageEl);
+            
+            // Remove old messages
+            while (chatContainer.children.length > MAX_MESSAGES) {
+                const firstChild = chatContainer.children[0];
+                firstChild.classList.add('removing');
+                setTimeout(() => firstChild.remove(), 300);
+            }
+            
+            // Auto-remove after lifetime
+            setTimeout(() => {
+                if (messageEl.parentNode) {
+                    messageEl.classList.add('removing');
+                    setTimeout(() => messageEl.remove(), 300);
+                }
+            }, MESSAGE_LIFETIME);
+        }
+        
+        // Auto-hide connection status
+        setTimeout(() => {
+            if (statusEl.className === 'connected') {
+                statusEl.style.opacity = '0.3';
+            }
+        }, 5000);
+        
+        // Initialize
+        connect();
+        
+        // Test function
+        window.testChat = () => {
+            addChatMessage({
+                uniqueId: 'TestUser',
+                comment: 'This is a test message!'
+            });
+        };
+        
+        window.testGift = () => {
+            addGiftMessage({
+                uniqueId: 'TestUser',
+                giftName: 'Rose',
+                repeatCount: 5
+            });
+        };
+    </script>
+</body>
+</html>
+

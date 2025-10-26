@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>TikHub - Win Goal Overlay</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1920px; height: 1080px;
+            overflow: hidden; background: transparent;
+            font-family: 'Arial', sans-serif;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #win-container {
+            width: 600px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        .win-title {
+            font-size: 36px; font-weight: bold;
+            color: #ffd700; text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+        }
+        .win-counter {
+            font-size: 72px; font-weight: bold;
+            color: white; text-align: center;
+            margin-bottom: 20px;
+        }
+        .win-current { color: #ffd700; }
+        .win-total { color: #aaa; }
+        .progress-circles {
+            display: flex; justify-content: center;
+            gap: 15px; margin-top: 20px;
+        }
+        .progress-circle {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .progress-circle.filled {
+            background: #ffd700;
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+        #connection-status {
+            position: fixed; top: 10px; right: 10px;
+            padding: 8px 16px; background: rgba(0, 0, 0, 0.7);
+            color: white; border-radius: 20px;
+            font-size: 12px; font-family: monospace; z-index: 10000;
+        }
+        #connection-status.connected { background: rgba(0, 200, 0, 0.7); }
+    </style>
+</head>
+<body>
+    <div id="connection-status">Connecting...</div>
+    <div id="win-container">
+        <div class="win-title" id="win-title">🏆 WINS</div>
+        <div class="win-counter">
+            <span class="win-current" id="current-wins">0</span>
+            <span class="win-total"> / <span id="total-wins">5</span></span>
+        </div>
+        <div class="progress-circles" id="progress-circles"></div>
+    </div>
+    <script>
+        const OVERLAY_SERVER_URL = 'wss://your-overlay-server.onrender.com';
+        const WS_PATH = '/ws/win-goal';
+        let ws = null, currentWins = 0, totalWins = 5;
+        const statusEl = document.getElementById('connection-status');
+        function connect() {
+            ws = new WebSocket(OVERLAY_SERVER_URL + WS_PATH);
+            ws.onopen = () => {
+                console.log('✅ Connected'); statusEl.textContent = 'Connected';
+                statusEl.className = 'connected';
+            };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'win-goal-update') {
+                    updateWinGoal(data.current, data.total, data.style);
+                } else if (data.type === 'initial-state' && data.state) {
+                    updateWinGoal(data.state.current, data.state.total, data.state.style);
+                }
+            };
+            ws.onclose = () => { setTimeout(connect, 3000); };
+        }
+        function updateWinGoal(current, total, style) {
+            currentWins = current || 0;
+            totalWins = total || 5;
+            document.getElementById('current-wins').textContent = currentWins;
+            document.getElementById('total-wins').textContent = totalWins;
+            if (style && style.winGameText) {
+                document.getElementById('win-title').textContent = style.winGameText;
+            }
+            updateCircles();
+        }
+        function updateCircles() {
+            const circlesContainer = document.getElementById('progress-circles');
+            circlesContainer.innerHTML = '';
+            for (let i = 0; i < totalWins; i++) {
+                const circle = document.createElement('div');
+                circle.className = 'progress-circle';
+                if (i < currentWins) circle.classList.add('filled');
+                circlesContainer.appendChild(circle);
+            }
+        }
+        connect();
+        setTimeout(() => { if (statusEl.className === 'connected') statusEl.style.opacity = '0.3'; }, 5000);
+        updateCircles();
+    </script>
+</body>
+</html>
+

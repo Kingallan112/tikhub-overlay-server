@@ -1,0 +1,420 @@
+// TikHub Overlay Server - Render.com
+// Hosts OBS overlays and provides real-time WebSocket updates from TikHub
+
+const express = require('express');
+const cors = require('cors');
+const http = require('http');
+const WebSocket = require('ws');
+const path = require('path');
+
+const app = express();
+const server = http.createServer(app);
+const PORT = process.env.PORT || 3003;
+
+// WebSocket Server
+const wss = new WebSocket.Server({ server });
+
+// In-memory storage
+const storage = {
+    // WebSocket clients organized by overlay type
+    clients: {
+        giftBubbles: new Set(),
+        luckyWheel: new Set(),
+        songRequest: new Set(),
+        likeGoal: new Set(),
+        followGoal: new Set(),
+        timer: new Set(),
+        chat: new Set(),
+        winGoal: new Set(),
+        topGift: new Set(),
+        topStreak: new Set(),
+        giftVsGift: new Set()
+    },
+    
+    // Current state for each overlay type
+    state: {
+        luckyWheel: null,
+        luckyWheel2: null,
+        songRequests: [],
+        currentTrack: null,
+        spotifyQueue: [],
+        likeGoal: { current: 0, goal: 100 },
+        followGoal: { current: 0, goal: 50 },
+        winGoal: { current: 0, total: 5, style: null },
+        timer: { remaining: 0, isRunning: false },
+        topGift: { topGifter: null, gifts: [] },
+        topStreak: { topStreaker: null, streaks: [] },
+        giftVsGift: { team1: { name: 'Team 1', score: 0 }, team2: { name: 'Team 2', score: 0 } }
+    },
+    
+    // Session management
+    sessions: new Map() // sessionId -> session data
+};
+
+// Middleware
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-Session-Token', 'X-Auth-Type']
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'overlays')));
+
+// Health check
+app.get('/ping', (req, res) => {
+    res.json({
+        success: true,
+        message: "TikHub Overlay Server is running on Render.com",
+        timestamp: new Date().toISOString(),
+        version: "1.0.0",
+        platform: "Render.com",
+        activeClients: {
+            giftBubbles: storage.clients.giftBubbles.size,
+            luckyWheel: storage.clients.luckyWheel.size,
+            songRequest: storage.clients.songRequest.size,
+            likeGoal: storage.clients.likeGoal.size,
+            followGoal: storage.clients.followGoal.size,
+            timer: storage.clients.timer.size,
+            chat: storage.clients.chat.size,
+            winGoal: storage.clients.winGoal.size,
+            topGift: storage.clients.topGift.size,
+            topStreak: storage.clients.topStreak.size,
+            giftVsGift: storage.clients.giftVsGift.size
+        }
+    });
+});
+
+// TikHub authentication endpoint
+app.post('/tikhub/authenticate', (req, res) => {
+    const { appId, secretKey } = req.body;
+    
+    // Simple authentication (you can enhance this)
+    if (appId === 'TikHub-Overlay-Integration') {
+        const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        storage.sessions.set(sessionToken, {
+            appId,
+            createdAt: Date.now(),
+            lastActivity: Date.now()
+        });
+        
+        console.log('✅ TikHub authenticated');
+        
+        return res.json({
+            success: true,
+            sessionToken,
+            message: 'Authenticated successfully'
+        });
+    }
+    
+    res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+    });
+});
+
+// Broadcast event to all clients of a specific type
+function broadcast(clientType, data) {
+    const clients = storage.clients[clientType];
+    if (!clients) return;
+    
+    const message = JSON.stringify(data);
+    let successCount = 0;
+    
+    clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            try {
+                client.send(message);
+                successCount++;
+            } catch (error) {
+                console.error(`Failed to send to ${clientType} client:`, error);
+            }
+        }
+    });
+    
+    console.log(`📡 Broadcast to ${clientType}: ${successCount}/${clients.size} clients`);
+}
+
+// Broadcast to all clients
+function broadcastAll(data) {
+    Object.keys(storage.clients).forEach(clientType => {
+        broadcast(clientType, data);
+    });
+}
+
+// Event endpoints - receive events from TikHub app
+app.post('/event/gift', (req, res) => {
+    const giftData = req.body;
+    console.log('🎁 Received gift event:', giftData);
+    
+    // Broadcast to gift bubble overlays
+    broadcast('giftBubbles', { type: 'gift', giftData });
+    
+    // Also broadcast to general clients
+    broadcastAll({ type: 'tiktok-event', event: { type: 'gift', ...giftData } });
+    
+    res.json({ success: true, message: 'Gift event broadcasted' });
+});
+
+app.post('/event/follow', (req, res) => {
+    const followData = req.body;
+    console.log('❤️ Received follow event:', followData);
+    
+    broadcastAll({ type: 'tiktok-event', event: { type: 'follow', ...followData } });
+    
+    res.json({ success: true, message: 'Follow event broadcasted' });
+});
+
+app.post('/event/like', (req, res) => {
+    const likeData = req.body;
+    console.log('👍 Received like event:', likeData);
+    
+    broadcast('likeGoal', { type: 'like', ...likeData });
+    broadcastAll({ type: 'tiktok-event', event: { type: 'like', ...likeData } });
+    
+    res.json({ success: true, message: 'Like event broadcasted' });
+});
+
+app.post('/event/chat', (req, res) => {
+    const chatData = req.body;
+    console.log('💬 Received chat event:', chatData);
+    
+    broadcast('chat', { type: 'chat', ...chatData });
+    broadcastAll({ type: 'tiktok-event', event: { type: 'chat', ...chatData } });
+    
+    res.json({ success: true, message: 'Chat event broadcasted' });
+});
+
+app.post('/event/share', (req, res) => {
+    const shareData = req.body;
+    console.log('📤 Received share event:', shareData);
+    
+    broadcastAll({ type: 'tiktok-event', event: { type: 'share', ...shareData } });
+    
+    res.json({ success: true, message: 'Share event broadcasted' });
+});
+
+app.post('/event/subscribe', (req, res) => {
+    const subscribeData = req.body;
+    console.log('⭐ Received subscribe event:', subscribeData);
+    
+    broadcastAll({ type: 'tiktok-event', event: { type: 'subscribe', ...subscribeData } });
+    
+    res.json({ success: true, message: 'Subscribe event broadcasted' });
+});
+
+// Lucky Wheel
+app.post('/overlay/luckywheel/config', (req, res) => {
+    storage.state.luckyWheel = req.body.config;
+    broadcast('luckyWheel', { type: 'wheel-config-update', config: req.body.config });
+    res.json({ success: true, message: 'Lucky wheel config updated' });
+});
+
+app.post('/overlay/luckywheel/spin', (req, res) => {
+    broadcast('luckyWheel', { type: 'wheel-spin', ...req.body });
+    res.json({ success: true, message: 'Lucky wheel spin broadcasted' });
+});
+
+// Song Requests
+app.post('/overlay/songrequest/add', (req, res) => {
+    const request = req.body;
+    storage.state.songRequests.push(request);
+    broadcast('songRequest', { type: 'song_request', request });
+    res.json({ success: true, message: 'Song request added' });
+});
+
+app.post('/overlay/songrequest/update', (req, res) => {
+    const { currentTrack, spotifyQueue } = req.body;
+    if (currentTrack) storage.state.currentTrack = currentTrack;
+    if (spotifyQueue) storage.state.spotifyQueue = spotifyQueue;
+    
+    broadcast('songRequest', { 
+        type: 'spotify_update', 
+        currentTrack: storage.state.currentTrack,
+        spotifyQueue: storage.state.spotifyQueue
+    });
+    
+    res.json({ success: true, message: 'Spotify data updated' });
+});
+
+// Like Goal
+app.post('/overlay/likegoal/update', (req, res) => {
+    storage.state.likeGoal = req.body;
+    broadcast('likeGoal', { type: 'like-goal-update', ...req.body });
+    res.json({ success: true, message: 'Like goal updated' });
+});
+
+// Follow Goal
+app.post('/overlay/followgoal/update', (req, res) => {
+    storage.state.followGoal = req.body;
+    broadcast('followGoal', { type: 'follow-goal-update', ...req.body });
+    res.json({ success: true, message: 'Follow goal updated' });
+});
+
+// Win Goal
+app.post('/overlay/wingoal/update', (req, res) => {
+    storage.state.winGoal = req.body;
+    broadcast('winGoal', { type: 'win-goal-update', ...req.body });
+    res.json({ success: true, message: 'Win goal updated' });
+});
+
+// Timer
+app.post('/overlay/timer/update', (req, res) => {
+    storage.state.timer = req.body;
+    broadcast('timer', { type: 'timer-update', ...req.body });
+    res.json({ success: true, message: 'Timer updated' });
+});
+
+// Top Gift
+app.post('/overlay/topgift/update', (req, res) => {
+    storage.state.topGift = req.body;
+    broadcast('topGift', { type: 'top-gift-update', ...req.body });
+    res.json({ success: true, message: 'Top gift updated' });
+});
+
+// Top Streak
+app.post('/overlay/topstreak/update', (req, res) => {
+    storage.state.topStreak = req.body;
+    broadcast('topStreak', { type: 'top-streak-update', ...req.body });
+    res.json({ success: true, message: 'Top streak updated' });
+});
+
+// Gift vs Gift
+app.post('/overlay/giftvsgift/update', (req, res) => {
+    storage.state.giftVsGift = req.body;
+    broadcast('giftVsGift', { type: 'gift-vs-gift-update', ...req.body });
+    res.json({ success: true, message: 'Gift vs gift updated' });
+});
+
+// Generic event broadcast (for any TikTok event)
+app.post('/broadcast-event', (req, res) => {
+    const { event, data } = req.body;
+    console.log('📢 Broadcasting event:', event, data);
+    
+    broadcastAll({ type: 'tiktok-event', event: event || data });
+    
+    res.json({ success: true, message: 'Event broadcasted' });
+});
+
+// Get current state (for overlay initialization)
+app.get('/state/:overlayType', (req, res) => {
+    const { overlayType } = req.params;
+    const state = storage.state[overlayType];
+    
+    res.json({
+        success: true,
+        state: state || null,
+        timestamp: Date.now()
+    });
+});
+
+// WebSocket connection handler
+wss.on('connection', (ws, req) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const path = url.pathname;
+    
+    // Determine overlay type from path
+    let overlayType = 'general';
+    
+    if (path.includes('/gift-bubbles') || path.includes('/giftbubbles')) {
+        overlayType = 'giftBubbles';
+    } else if (path.includes('/luckywheel') || path.includes('/wheel')) {
+        overlayType = 'luckyWheel';
+    } else if (path.includes('/songrequest') || path.includes('/song')) {
+        overlayType = 'songRequest';
+    } else if (path.includes('/like-goal') || path.includes('/likegoal')) {
+        overlayType = 'likeGoal';
+    } else if (path.includes('/follow-goal') || path.includes('/followgoal')) {
+        overlayType = 'followGoal';
+    } else if (path.includes('/timer')) {
+        overlayType = 'timer';
+    } else if (path.includes('/chat')) {
+        overlayType = 'chat';
+    } else if (path.includes('/win-goal') || path.includes('/wingoal')) {
+        overlayType = 'winGoal';
+    } else if (path.includes('/top-gift') || path.includes('/topgift')) {
+        overlayType = 'topGift';
+    } else if (path.includes('/top-streak') || path.includes('/topstreak')) {
+        overlayType = 'topStreak';
+    } else if (path.includes('/giftvsgift') || path.includes('/gift-vs-gift')) {
+        overlayType = 'giftVsGift';
+    }
+    
+    // Add to appropriate client set
+    if (storage.clients[overlayType]) {
+        storage.clients[overlayType].add(ws);
+        console.log(`✅ ${overlayType} overlay connected (${storage.clients[overlayType].size} total)`);
+        
+        // Send current state to new client
+        const currentState = storage.state[overlayType];
+        if (currentState) {
+            try {
+                ws.send(JSON.stringify({ type: 'initial-state', state: currentState }));
+            } catch (error) {
+                console.error('Failed to send initial state:', error);
+            }
+        }
+    }
+    
+    // Handle disconnection
+    ws.on('close', () => {
+        if (storage.clients[overlayType]) {
+            storage.clients[overlayType].delete(ws);
+            console.log(`❌ ${overlayType} overlay disconnected (${storage.clients[overlayType].size} remaining)`);
+        }
+    });
+    
+    // Handle errors
+    ws.on('error', (error) => {
+        console.error(`WebSocket error for ${overlayType}:`, error);
+    });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: "Endpoint not found",
+        availableEndpoints: [
+            "GET /ping",
+            "POST /tikhub/authenticate",
+            "POST /event/gift",
+            "POST /event/follow",
+            "POST /event/like",
+            "POST /event/chat",
+            "POST /event/share",
+            "POST /event/subscribe",
+            "POST /broadcast-event",
+            "POST /overlay/luckywheel/config",
+            "POST /overlay/luckywheel/spin",
+            "POST /overlay/songrequest/add",
+            "POST /overlay/songrequest/update",
+            "POST /overlay/likegoal/update",
+            "POST /overlay/followgoal/update",
+            "POST /overlay/wingoal/update",
+            "POST /overlay/timer/update",
+            "GET /state/:overlayType",
+            "WebSocket: /ws/gift-bubbles",
+            "WebSocket: /ws/luckywheel",
+            "WebSocket: /ws/songrequests",
+            "WebSocket: /ws/like-goal",
+            "WebSocket: /ws/follow-goal",
+            "WebSocket: /ws/timer",
+            "WebSocket: /ws/chat",
+            "WebSocket: /ws/win-goal"
+        ]
+    });
+});
+
+// Start server
+server.listen(PORT, () => {
+    console.log('🚀 TikHub Overlay Server running on Render.com');
+    console.log(`🌐 Server listening on port ${PORT}`);
+    console.log('📡 WebSocket server ready');
+    console.log('🎨 Overlay endpoints available');
+    console.log('✅ Ready to receive TikHub events!');
+});
+
+module.exports = app;
+
