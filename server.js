@@ -484,6 +484,8 @@ app.use('*', (req, res) => {
             "POST /event/share",
             "POST /event/subscribe",
             "POST /broadcast-event",
+            "GET /api/actions",
+            "POST /api/actions",
             "POST /overlay/luckywheel/config",
             "POST /overlay/luckywheel/spin",
             "POST /overlay/luckywheel2/config",
