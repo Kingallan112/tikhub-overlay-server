@@ -60,6 +60,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'overlays')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // Health check
 app.get('/ping', (req, res) => {
