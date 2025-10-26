@@ -27758,105 +27758,159 @@ module.exports = __webpack_require__.p + "274aa0db33b69eb283cd.png";
 /*!***********************************!*\
   !*** ./src/assets/boxes/index.ts ***!
   \***********************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BOX_IMAGES = void 0;
-const sand_2_png_1 = __importDefault(__webpack_require__(/*! ./sand 2.png */ "./src/assets/boxes/sand 2.png"));
-const purple_circle_png_1 = __importDefault(__webpack_require__(/*! ./purple circle.png */ "./src/assets/boxes/purple circle.png"));
-const sand_png_1 = __importDefault(__webpack_require__(/*! ./sand.png */ "./src/assets/boxes/sand.png"));
-const brown_png_1 = __importDefault(__webpack_require__(/*! ./brown.png */ "./src/assets/boxes/brown.png"));
-const cyan_triangle_png_1 = __importDefault(__webpack_require__(/*! ./cyan triangle.png */ "./src/assets/boxes/cyan triangle.png"));
-const green_line_2_png_1 = __importDefault(__webpack_require__(/*! ./green line 2.png */ "./src/assets/boxes/green line 2.png"));
-const blue_circle_png_1 = __importDefault(__webpack_require__(/*! ./blue circle.png */ "./src/assets/boxes/blue circle.png"));
-const pink_line_2_png_1 = __importDefault(__webpack_require__(/*! ./pink line 2.png */ "./src/assets/boxes/pink line 2.png"));
-const red_line_png_1 = __importDefault(__webpack_require__(/*! ./red line.png */ "./src/assets/boxes/red line.png"));
-const yellow_sun_png_1 = __importDefault(__webpack_require__(/*! ./yellow sun.png */ "./src/assets/boxes/yellow sun.png"));
-const green_dot_png_1 = __importDefault(__webpack_require__(/*! ./green dot.png */ "./src/assets/boxes/green dot.png"));
-const green_wave_png_1 = __importDefault(__webpack_require__(/*! ./green wave.png */ "./src/assets/boxes/green wave.png"));
-const white_wood_2_png_1 = __importDefault(__webpack_require__(/*! ./white wood 2.png */ "./src/assets/boxes/white wood 2.png"));
-const night_star_png_1 = __importDefault(__webpack_require__(/*! ./night star.png */ "./src/assets/boxes/night star.png"));
-const gray_png_1 = __importDefault(__webpack_require__(/*! ./gray.png */ "./src/assets/boxes/gray.png"));
-const blue_dot_png_1 = __importDefault(__webpack_require__(/*! ./blue dot.png */ "./src/assets/boxes/blue dot.png"));
-const dark_purple_png_1 = __importDefault(__webpack_require__(/*! ./dark purple.png */ "./src/assets/boxes/dark purple.png"));
-const pink_line_png_1 = __importDefault(__webpack_require__(/*! ./pink line.png */ "./src/assets/boxes/pink line.png"));
-const orange_red_2_png_1 = __importDefault(__webpack_require__(/*! ./orange-red 2.png */ "./src/assets/boxes/orange-red 2.png"));
-const green_2_png_1 = __importDefault(__webpack_require__(/*! ./green 2.png */ "./src/assets/boxes/green 2.png"));
-const cyan_3_png_1 = __importDefault(__webpack_require__(/*! ./cyan 3.png */ "./src/assets/boxes/cyan 3.png"));
-const yellow_2_png_1 = __importDefault(__webpack_require__(/*! ./yellow 2.png */ "./src/assets/boxes/yellow 2.png"));
-const white_wood_png_1 = __importDefault(__webpack_require__(/*! ./white wood.png */ "./src/assets/boxes/white wood.png"));
-const dark_green_png_1 = __importDefault(__webpack_require__(/*! ./dark green.png */ "./src/assets/boxes/dark green.png"));
-const red_2_png_1 = __importDefault(__webpack_require__(/*! ./red 2.png */ "./src/assets/boxes/red 2.png"));
-const purple_2_png_1 = __importDefault(__webpack_require__(/*! ./purple 2.png */ "./src/assets/boxes/purple 2.png"));
-const pink_dot_png_1 = __importDefault(__webpack_require__(/*! ./pink dot.png */ "./src/assets/boxes/pink dot.png"));
-const orange_red_png_1 = __importDefault(__webpack_require__(/*! ./orange-red.png */ "./src/assets/boxes/orange-red.png"));
-const green_3_png_1 = __importDefault(__webpack_require__(/*! ./green 3.png */ "./src/assets/boxes/green 3.png"));
-const blue_green_png_1 = __importDefault(__webpack_require__(/*! ./blue-green.png */ "./src/assets/boxes/blue-green.png"));
-const yellow_3_png_1 = __importDefault(__webpack_require__(/*! ./yellow 3.png */ "./src/assets/boxes/yellow 3.png"));
-const black_2_png_1 = __importDefault(__webpack_require__(/*! ./black 2.png */ "./src/assets/boxes/black 2.png"));
-const blue_2_png_1 = __importDefault(__webpack_require__(/*! ./blue 2.png */ "./src/assets/boxes/blue 2.png"));
-const orange_2_png_1 = __importDefault(__webpack_require__(/*! ./orange 2.png */ "./src/assets/boxes/orange 2.png"));
-const purple_3_png_1 = __importDefault(__webpack_require__(/*! ./purple 3.png */ "./src/assets/boxes/purple 3.png"));
-const pinky_png_1 = __importDefault(__webpack_require__(/*! ./pinky.png */ "./src/assets/boxes/pinky.png"));
-const black_png_1 = __importDefault(__webpack_require__(/*! ./black.png */ "./src/assets/boxes/black.png"));
-const orange_png_1 = __importDefault(__webpack_require__(/*! ./orange.png */ "./src/assets/boxes/orange.png"));
-const red_png_1 = __importDefault(__webpack_require__(/*! ./red.png */ "./src/assets/boxes/red.png"));
-const pink_png_1 = __importDefault(__webpack_require__(/*! ./pink.png */ "./src/assets/boxes/pink.png"));
-const purple_png_1 = __importDefault(__webpack_require__(/*! ./purple.png */ "./src/assets/boxes/purple.png"));
-const blue_png_1 = __importDefault(__webpack_require__(/*! ./blue.png */ "./src/assets/boxes/blue.png"));
-const cyan_png_1 = __importDefault(__webpack_require__(/*! ./cyan.png */ "./src/assets/boxes/cyan.png"));
-const green_png_1 = __importDefault(__webpack_require__(/*! ./green.png */ "./src/assets/boxes/green.png"));
-const yellow_png_1 = __importDefault(__webpack_require__(/*! ./yellow.png */ "./src/assets/boxes/yellow.png"));
+// Check if running on Render overlay server
+const isRenderOverlay = typeof window !== 'undefined' && window.location.hostname === 'tikhub-overlay-server.onrender.com';
+const ASSET_BASE = isRenderOverlay ? 'https://tikhub-overlay-server.onrender.com/assets/boxes' : '';
+// If on Render, use direct paths. Otherwise, use webpack imports.
+let sand2, purpleCircle, sand, brown, cyanTriangle, greenLine2, blueCircle, pinkLine2, redLine, yellowSun;
+let greenDot, greenWave, whiteWood2, nightStar, gray, blueDot, darkPurple, pinkLine, orangeRed2, green2;
+let cyan3, yellow2, whiteWood, darkGreen, red2, purple2, pinkDot, orangeRed, green3, blueGreen;
+let yellow3, black2, blue2, orange2, purple3, pinky, black, orange, red, pink, purple, blue, cyan, green, yellow;
+if (isRenderOverlay) {
+    sand2 = `${ASSET_BASE}/sand 2.png`;
+    purpleCircle = `${ASSET_BASE}/purple circle.png`;
+    sand = `${ASSET_BASE}/sand.png`;
+    brown = `${ASSET_BASE}/brown.png`;
+    cyanTriangle = `${ASSET_BASE}/cyan triangle.png`;
+    greenLine2 = `${ASSET_BASE}/green line 2.png`;
+    blueCircle = `${ASSET_BASE}/blue circle.png`;
+    pinkLine2 = `${ASSET_BASE}/pink line 2.png`;
+    redLine = `${ASSET_BASE}/red line.png`;
+    yellowSun = `${ASSET_BASE}/yellow sun.png`;
+    greenDot = `${ASSET_BASE}/green dot.png`;
+    greenWave = `${ASSET_BASE}/green wave.png`;
+    whiteWood2 = `${ASSET_BASE}/white wood 2.png`;
+    nightStar = `${ASSET_BASE}/night star.png`;
+    gray = `${ASSET_BASE}/gray.png`;
+    blueDot = `${ASSET_BASE}/blue dot.png`;
+    darkPurple = `${ASSET_BASE}/dark purple.png`;
+    pinkLine = `${ASSET_BASE}/pink line.png`;
+    orangeRed2 = `${ASSET_BASE}/orange-red 2.png`;
+    green2 = `${ASSET_BASE}/green 2.png`;
+    cyan3 = `${ASSET_BASE}/cyan 3.png`;
+    yellow2 = `${ASSET_BASE}/yellow 2.png`;
+    whiteWood = `${ASSET_BASE}/white wood.png`;
+    darkGreen = `${ASSET_BASE}/dark green.png`;
+    red2 = `${ASSET_BASE}/red 2.png`;
+    purple2 = `${ASSET_BASE}/purple 2.png`;
+    pinkDot = `${ASSET_BASE}/pink dot.png`;
+    orangeRed = `${ASSET_BASE}/orange-red.png`;
+    green3 = `${ASSET_BASE}/green 3.png`;
+    blueGreen = `${ASSET_BASE}/blue-green.png`;
+    yellow3 = `${ASSET_BASE}/yellow 3.png`;
+    black2 = `${ASSET_BASE}/black 2.png`;
+    blue2 = `${ASSET_BASE}/blue 2.png`;
+    orange2 = `${ASSET_BASE}/orange 2.png`;
+    purple3 = `${ASSET_BASE}/purple 3.png`;
+    pinky = `${ASSET_BASE}/pinky.png`;
+    black = `${ASSET_BASE}/black.png`;
+    orange = `${ASSET_BASE}/orange.png`;
+    red = `${ASSET_BASE}/red.png`;
+    pink = `${ASSET_BASE}/pink.png`;
+    purple = `${ASSET_BASE}/purple.png`;
+    blue = `${ASSET_BASE}/blue.png`;
+    cyan = `${ASSET_BASE}/cyan.png`;
+    green = `${ASSET_BASE}/green.png`;
+    yellow = `${ASSET_BASE}/yellow.png`;
+}
+else {
+    sand2 = __webpack_require__(/*! ./sand 2.png */ "./src/assets/boxes/sand 2.png");
+    purpleCircle = __webpack_require__(/*! ./purple circle.png */ "./src/assets/boxes/purple circle.png");
+    sand = __webpack_require__(/*! ./sand.png */ "./src/assets/boxes/sand.png");
+    brown = __webpack_require__(/*! ./brown.png */ "./src/assets/boxes/brown.png");
+    cyanTriangle = __webpack_require__(/*! ./cyan triangle.png */ "./src/assets/boxes/cyan triangle.png");
+    greenLine2 = __webpack_require__(/*! ./green line 2.png */ "./src/assets/boxes/green line 2.png");
+    blueCircle = __webpack_require__(/*! ./blue circle.png */ "./src/assets/boxes/blue circle.png");
+    pinkLine2 = __webpack_require__(/*! ./pink line 2.png */ "./src/assets/boxes/pink line 2.png");
+    redLine = __webpack_require__(/*! ./red line.png */ "./src/assets/boxes/red line.png");
+    yellowSun = __webpack_require__(/*! ./yellow sun.png */ "./src/assets/boxes/yellow sun.png");
+    greenDot = __webpack_require__(/*! ./green dot.png */ "./src/assets/boxes/green dot.png");
+    greenWave = __webpack_require__(/*! ./green wave.png */ "./src/assets/boxes/green wave.png");
+    whiteWood2 = __webpack_require__(/*! ./white wood 2.png */ "./src/assets/boxes/white wood 2.png");
+    nightStar = __webpack_require__(/*! ./night star.png */ "./src/assets/boxes/night star.png");
+    gray = __webpack_require__(/*! ./gray.png */ "./src/assets/boxes/gray.png");
+    blueDot = __webpack_require__(/*! ./blue dot.png */ "./src/assets/boxes/blue dot.png");
+    darkPurple = __webpack_require__(/*! ./dark purple.png */ "./src/assets/boxes/dark purple.png");
+    pinkLine = __webpack_require__(/*! ./pink line.png */ "./src/assets/boxes/pink line.png");
+    orangeRed2 = __webpack_require__(/*! ./orange-red 2.png */ "./src/assets/boxes/orange-red 2.png");
+    green2 = __webpack_require__(/*! ./green 2.png */ "./src/assets/boxes/green 2.png");
+    cyan3 = __webpack_require__(/*! ./cyan 3.png */ "./src/assets/boxes/cyan 3.png");
+    yellow2 = __webpack_require__(/*! ./yellow 2.png */ "./src/assets/boxes/yellow 2.png");
+    whiteWood = __webpack_require__(/*! ./white wood.png */ "./src/assets/boxes/white wood.png");
+    darkGreen = __webpack_require__(/*! ./dark green.png */ "./src/assets/boxes/dark green.png");
+    red2 = __webpack_require__(/*! ./red 2.png */ "./src/assets/boxes/red 2.png");
+    purple2 = __webpack_require__(/*! ./purple 2.png */ "./src/assets/boxes/purple 2.png");
+    pinkDot = __webpack_require__(/*! ./pink dot.png */ "./src/assets/boxes/pink dot.png");
+    orangeRed = __webpack_require__(/*! ./orange-red.png */ "./src/assets/boxes/orange-red.png");
+    green3 = __webpack_require__(/*! ./green 3.png */ "./src/assets/boxes/green 3.png");
+    blueGreen = __webpack_require__(/*! ./blue-green.png */ "./src/assets/boxes/blue-green.png");
+    yellow3 = __webpack_require__(/*! ./yellow 3.png */ "./src/assets/boxes/yellow 3.png");
+    black2 = __webpack_require__(/*! ./black 2.png */ "./src/assets/boxes/black 2.png");
+    blue2 = __webpack_require__(/*! ./blue 2.png */ "./src/assets/boxes/blue 2.png");
+    orange2 = __webpack_require__(/*! ./orange 2.png */ "./src/assets/boxes/orange 2.png");
+    purple3 = __webpack_require__(/*! ./purple 3.png */ "./src/assets/boxes/purple 3.png");
+    pinky = __webpack_require__(/*! ./pinky.png */ "./src/assets/boxes/pinky.png");
+    black = __webpack_require__(/*! ./black.png */ "./src/assets/boxes/black.png");
+    orange = __webpack_require__(/*! ./orange.png */ "./src/assets/boxes/orange.png");
+    red = __webpack_require__(/*! ./red.png */ "./src/assets/boxes/red.png");
+    pink = __webpack_require__(/*! ./pink.png */ "./src/assets/boxes/pink.png");
+    purple = __webpack_require__(/*! ./purple.png */ "./src/assets/boxes/purple.png");
+    blue = __webpack_require__(/*! ./blue.png */ "./src/assets/boxes/blue.png");
+    cyan = __webpack_require__(/*! ./cyan.png */ "./src/assets/boxes/cyan.png");
+    green = __webpack_require__(/*! ./green.png */ "./src/assets/boxes/green.png");
+    yellow = __webpack_require__(/*! ./yellow.png */ "./src/assets/boxes/yellow.png");
+}
 exports.BOX_IMAGES = {
-    'sand 2.png': sand_2_png_1.default,
-    'purple circle.png': purple_circle_png_1.default,
-    'sand.png': sand_png_1.default,
-    'brown.png': brown_png_1.default,
-    'cyan triangle.png': cyan_triangle_png_1.default,
-    'green line 2.png': green_line_2_png_1.default,
-    'blue circle.png': blue_circle_png_1.default,
-    'pink line 2.png': pink_line_2_png_1.default,
-    'red line.png': red_line_png_1.default,
-    'yellow sun.png': yellow_sun_png_1.default,
-    'green dot.png': green_dot_png_1.default,
-    'green wave.png': green_wave_png_1.default,
-    'white wood 2.png': white_wood_2_png_1.default,
-    'night star.png': night_star_png_1.default,
-    'gray.png': gray_png_1.default,
-    'blue dot.png': blue_dot_png_1.default,
-    'dark purple.png': dark_purple_png_1.default,
-    'pink line.png': pink_line_png_1.default,
-    'orange-red 2.png': orange_red_2_png_1.default,
-    'green 2.png': green_2_png_1.default,
-    'cyan 3.png': cyan_3_png_1.default,
-    'yellow 2.png': yellow_2_png_1.default,
-    'white wood.png': white_wood_png_1.default,
-    'dark green.png': dark_green_png_1.default,
-    'red 2.png': red_2_png_1.default,
-    'purple 2.png': purple_2_png_1.default,
-    'pink dot.png': pink_dot_png_1.default,
-    'orange-red.png': orange_red_png_1.default,
-    'green 3.png': green_3_png_1.default,
-    'blue-green.png': blue_green_png_1.default,
-    'yellow 3.png': yellow_3_png_1.default,
-    'black 2.png': black_2_png_1.default,
-    'blue 2.png': blue_2_png_1.default,
-    'orange 2.png': orange_2_png_1.default,
-    'purple 3.png': purple_3_png_1.default,
-    'pinky.png': pinky_png_1.default,
-    'black.png': black_png_1.default,
-    'orange.png': orange_png_1.default,
-    'red.png': red_png_1.default,
-    'pink.png': pink_png_1.default,
-    'purple.png': purple_png_1.default,
-    'blue.png': blue_png_1.default,
-    'cyan.png': cyan_png_1.default,
-    'green.png': green_png_1.default,
-    'yellow.png': yellow_png_1.default,
+    'sand 2.png': sand2,
+    'purple circle.png': purpleCircle,
+    'sand.png': sand,
+    'brown.png': brown,
+    'cyan triangle.png': cyanTriangle,
+    'green line 2.png': greenLine2,
+    'blue circle.png': blueCircle,
+    'pink line 2.png': pinkLine2,
+    'red line.png': redLine,
+    'yellow sun.png': yellowSun,
+    'green dot.png': greenDot,
+    'green wave.png': greenWave,
+    'white wood 2.png': whiteWood2,
+    'night star.png': nightStar,
+    'gray.png': gray,
+    'blue dot.png': blueDot,
+    'dark purple.png': darkPurple,
+    'pink line.png': pinkLine,
+    'orange-red 2.png': orangeRed2,
+    'green 2.png': green2,
+    'cyan 3.png': cyan3,
+    'yellow 2.png': yellow2,
+    'white wood.png': whiteWood,
+    'dark green.png': darkGreen,
+    'red 2.png': red2,
+    'purple 2.png': purple2,
+    'pink dot.png': pinkDot,
+    'orange-red.png': orangeRed,
+    'green 3.png': green3,
+    'blue-green.png': blueGreen,
+    'yellow 3.png': yellow3,
+    'black 2.png': black2,
+    'blue 2.png': blue2,
+    'orange 2.png': orange2,
+    'purple 3.png': purple3,
+    'pinky.png': pinky,
+    'black.png': black,
+    'orange.png': orange,
+    'red.png': red,
+    'pink.png': pink,
+    'purple.png': purple,
+    'blue.png': blue,
+    'cyan.png': cyan,
+    'green.png': green,
+    'yellow.png': yellow,
 };
 
 
@@ -28825,7 +28879,7 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'flex-start',
-                }, children: [(0, jsx_runtime_1.jsx)("div", { style: { fontSize: 24, fontWeight: 900, color: '#7fff7f', marginBottom: 6, letterSpacing: 1 }, children: "Lucky Wheel Settings" }), (0, jsx_runtime_1.jsx)("div", { style: { color: '#b0b0b0', fontSize: 18, marginBottom: 18, textAlign: 'left', maxWidth: 900 }, children: "Configure your Lucky Wheel overlay settings below." }), (0, jsx_runtime_1.jsxs)("div", { style: { margin: '24px 0' }, children: [(0, jsx_runtime_1.jsx)("div", { style: { color: '#7fff7f', fontWeight: 700, marginBottom: 4 }, children: "Overlay URL" }), (0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', alignItems: 'center', gap: 8 }, children: [(0, overlayUtils_1.createMaskedUrlDisplay)(`http://localhost:3002/overlays/${instanceKey}-overlay.html`, `${instanceKey === 'luckywheel' ? 'lucky wheel' : 'lucky wheel 2'}`), (0, jsx_runtime_1.jsx)("button", { onClick: () => (0, overlayUtils_1.copyOverlayUrl)(`http://localhost:3002/overlays/${instanceKey}-overlay.html`, `${instanceKey === 'luckywheel' ? 'lucky wheel' : 'lucky wheel 2'}`), style: {
+                }, children: [(0, jsx_runtime_1.jsx)("div", { style: { fontSize: 24, fontWeight: 900, color: '#7fff7f', marginBottom: 6, letterSpacing: 1 }, children: "Lucky Wheel Settings" }), (0, jsx_runtime_1.jsx)("div", { style: { color: '#b0b0b0', fontSize: 18, marginBottom: 18, textAlign: 'left', maxWidth: 900 }, children: "Configure your Lucky Wheel overlay settings below." }), (0, jsx_runtime_1.jsxs)("div", { style: { margin: '24px 0' }, children: [(0, jsx_runtime_1.jsx)("div", { style: { color: '#7fff7f', fontWeight: 700, marginBottom: 4 }, children: "Overlay URL" }), (0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', alignItems: 'center', gap: 8 }, children: [(0, overlayUtils_1.createMaskedUrlDisplay)(`https://tikhub-overlay-server.onrender.com/${instanceKey}-overlay.html`, `${instanceKey === 'luckywheel' ? 'lucky wheel' : 'lucky wheel 2'}`), (0, jsx_runtime_1.jsx)("button", { onClick: () => (0, overlayUtils_1.copyOverlayUrl)(`https://tikhub-overlay-server.onrender.com/${instanceKey}-overlay.html`, `${instanceKey === 'luckywheel' ? 'lucky wheel' : 'lucky wheel 2'}`), style: {
                                             background: '#2ecc40',
                                             color: '#fff',
                                             border: 'none',
@@ -29372,6 +29426,22 @@ class SubscriptionService {
         this.initializeUpgradeTriggers();
         // Check for expired subscriptions on startup
         this.checkAndHandleExpiration();
+        // Listen for subscription updates from cloud
+        window.addEventListener('subscriptionUpdated', ((event) => {
+            console.log('📦 SubscriptionService: Received subscription update from cloud');
+            if (event.detail) {
+                this.currentSubscription = {
+                    ...this.currentSubscription, // Keep existing fields like usage
+                    tier: event.detail.tier || 'free',
+                    status: event.detail.status || 'active',
+                    startDate: event.detail.start_date || event.detail.startDate || new Date().toISOString(),
+                    endDate: event.detail.end_date || event.detail.endDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    autoRenew: event.detail.auto_renew || event.detail.autoRenew || false
+                };
+                this.saveToStorage();
+                console.log('📦 SubscriptionService: Updated to tier:', this.currentSubscription.tier);
+            }
+        }));
     }
     static getInstance() {
         if (!SubscriptionService.instance) {
@@ -30597,7 +30667,7 @@ const getMaskedOverlayUrl = (url) => {
     const subscriptionService = subscriptionService_1.default.getInstance();
     if (!subscriptionService.canCopyOverlayUrls()) {
         // For free tier users, show a completely masked version
-        return 'http://localhost:3002/overlays/***-overlay.html';
+        return 'https://tikhub-overlay-server.onrender.com/***-overlay.html';
     }
     return url;
 };
