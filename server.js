@@ -34,6 +34,7 @@ const storage = {
     
     // Current state for each overlay type
     state: {
+        actions: [],
         luckyWheel: null,
         luckyWheel2: null,
         songRequests: [],
@@ -229,6 +230,24 @@ app.post('/overlay/luckywheel2/config', (req, res) => {
 app.post('/overlay/luckywheel2/spin', (req, res) => {
     broadcast('luckyWheel2', { type: 'wheel2-spin', ...req.body });
     res.json({ success: true, message: 'Lucky wheel 2 spin broadcasted' });
+});
+
+// Actions API
+app.get('/api/actions', (req, res) => {
+    res.json({ 
+        success: true, 
+        actions: storage.state.actions || [] 
+    });
+});
+
+app.post('/api/actions', (req, res) => {
+    const { actions } = req.body;
+    if (Array.isArray(actions)) {
+        storage.state.actions = actions;
+        res.json({ success: true, message: 'Actions updated' });
+    } else {
+        res.status(400).json({ success: false, error: 'Actions must be an array' });
+    }
 });
 
 // Song Requests
