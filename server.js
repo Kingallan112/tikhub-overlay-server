@@ -403,20 +403,33 @@ app.post('/overlay/topstreak/update', (req, res) => {
 
 // Gift vs Gift
 app.post('/overlay/giftvsgift/update', (req, res) => {
+    console.log('🎯 [GiftVsGift] Received update:', {
+        leftPoints: req.body.leftPoints,
+        rightPoints: req.body.rightPoints,
+        goal: req.body.goal,
+        goalBehavior: req.body.goalBehavior
+    });
     storage.state.giftVsGift = req.body;
     broadcast('giftVsGift', { type: 'gift-vs-gift-update', ...req.body });
+    console.log(`📡 [GiftVsGift] Broadcasted update to ${storage.clients.giftVsGift.size} clients`);
     res.json({ success: true, message: 'Gift vs gift updated' });
 });
 
 app.get('/api/giftvsgift', (req, res) => {
-    res.json(storage.state.giftVsGift || {
+    const data = storage.state.giftVsGift || {
         leftPoints: 0,
         rightPoints: 0,
         goal: 500,
         goalBehavior: 'keep',
         actionWinLeft: 'none',
         actionWinRight: 'none'
+    };
+    console.log('📥 [GiftVsGift] GET request - returning:', {
+        leftPoints: data.leftPoints,
+        rightPoints: data.rightPoints,
+        goal: data.goal
     });
+    res.json(data);
 });
 
 // Generic event broadcast (for any TikTok event)
