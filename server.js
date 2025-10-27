@@ -427,6 +427,63 @@ app.get('/state/:overlayType', (req, res) => {
     });
 });
 
+// Goal settings endpoint (for like/follow goal overlays)
+app.get('/api/goal-settings', (req, res) => {
+    res.json({
+        success: true,
+        likeGoal: storage.state.likeGoal || { current: 0, goal: 100 },
+        followGoal: storage.state.followGoal || { current: 0, goal: 50 },
+        timestamp: Date.now()
+    });
+});
+
+// Test endpoints for goal overlays
+app.post('/api/test/like', (req, res) => {
+    const { count = 1 } = req.body;
+    console.log(`🧪 Test like event: +${count}`);
+    
+    // Update like goal
+    storage.state.likeGoal.current = Math.min(
+        storage.state.likeGoal.current + count,
+        storage.state.likeGoal.goal
+    );
+    
+    // Broadcast to overlays
+    broadcast('likeGoal', { 
+        type: 'like-goal-update', 
+        ...storage.state.likeGoal 
+    });
+    
+    res.json({ 
+        success: true, 
+        current: storage.state.likeGoal.current,
+        goal: storage.state.likeGoal.goal
+    });
+});
+
+app.post('/api/test/follow', (req, res) => {
+    const { count = 1 } = req.body;
+    console.log(`🧪 Test follow event: +${count}`);
+    
+    // Update follow goal
+    storage.state.followGoal.current = Math.min(
+        storage.state.followGoal.current + count,
+        storage.state.followGoal.goal
+    );
+    
+    // Broadcast to overlays
+    broadcast('followGoal', { 
+        type: 'follow-goal-update', 
+        ...storage.state.followGoal 
+    });
+    
+    res.json({ 
+        success: true, 
+        current: storage.state.followGoal.current,
+        goal: storage.state.followGoal.goal
+    });
+});
+
 // WebSocket connection handler
 wss.on('connection', (ws, req) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -510,6 +567,8 @@ app.use('*', (req, res) => {
             "POST /api/actions",
             "POST /api/execute-action",
             "GET /api/goal-settings",
+            "POST /api/test/like",
+            "POST /api/test/follow",
             "POST /overlay/luckywheel/config",
             "POST /overlay/luckywheel/spin",
             "POST /overlay/luckywheel2/config",
@@ -520,6 +579,9 @@ app.use('*', (req, res) => {
             "POST /overlay/followgoal/update",
             "POST /overlay/wingoal/update",
             "POST /overlay/timer/update",
+            "POST /overlay/topgift/update",
+            "POST /overlay/topstreak/update",
+            "POST /overlay/giftvsgift/update",
             "GET /state/:overlayType",
             "WebSocket: /ws/gift-bubbles",
             "WebSocket: /ws/luckywheel",
@@ -529,7 +591,8 @@ app.use('*', (req, res) => {
             "WebSocket: /ws/follow-goal",
             "WebSocket: /ws/timer",
             "WebSocket: /ws/chat",
-            "WebSocket: /ws/win-goal"
+            "WebSocket: /ws/win-goal",
+            "WebSocket: /ws/giftvsgift"
         ]
     });
 });
