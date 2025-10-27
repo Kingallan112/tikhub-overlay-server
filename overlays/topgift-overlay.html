@@ -112,11 +112,10 @@
         let isConnected = false;
 
         // Connect to WebSocket for real-time gift data
-        const OVERLAY_SERVER_URL = 'wss://tikhub-overlay-server.onrender.com';
-        const ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/top-gift');
+        const ws = new WebSocket('wss://tikhub-overlay-server.onrender.com/ws/topgift');
         
         ws.onopen = () => {
-            console.log('Connected to gift overlay WebSocket');
+            console.log('✅ [TopGift] Connected to overlay WebSocket');
             isConnected = true;
             updateConnectionStatus('Waiting for gifts...');
         };
@@ -124,17 +123,28 @@
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                console.log('[TopGift] Received WebSocket message:', data);
+                
                 if (data.type === 'gift' && data.giftData) {
-                    const giftData = data.giftData;
+                    const gift = data.giftData;
+                    const giftData = {
+                        username: gift.nickname || gift.username || 'Anonymous',
+                        giftName: gift.giftName || 'Gift',
+                        giftValue: gift.diamondCount || gift.giftValue || 0,
+                        giftImage: gift.giftPictureUrl || gift.giftImage || ''
+                    };
+                    
+                    console.log('[TopGift] Processed gift:', giftData);
                     
                     // Update top gift if this is a higher value gift
                     if (!topGift || giftData.giftValue > topGift.giftValue) {
+                        console.log(`🏆 [TopGift] New top gift! ${giftData.username} - ${giftData.giftName} (${giftData.giftValue} coins)`);
                         topGift = giftData;
                         updateOverlay();
                     }
                 }
             } catch (error) {
-                console.error('Error parsing gift data:', error);
+                console.error('[TopGift] Error parsing gift data:', error);
             }
         };
 

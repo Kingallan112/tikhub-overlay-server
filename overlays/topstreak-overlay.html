@@ -171,11 +171,10 @@
         }
 
         // Connect to WebSocket for real-time gift data
-        const OVERLAY_SERVER_URL = 'wss://tikhub-overlay-server.onrender.com';
-        const ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/top-streak');
+        const ws = new WebSocket('wss://tikhub-overlay-server.onrender.com/ws/topstreak');
         
         ws.onopen = () => {
-            console.log('Connected to streak overlay WebSocket');
+            console.log('✅ [TopStreak] Connected to overlay WebSocket');
             isConnected = true;
             updateConnectionStatus('Waiting for gift streaks...');
         };
@@ -185,22 +184,30 @@
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                console.log('[TopStreak] Received WebSocket message:', data);
+                
                 if (data.type === 'gift' && data.giftData) {
                     const g = data.giftData;
                     const isStreakable = Number(g.giftType) === 1;
                     const groupId = g.groupId || 'single';
                     const count = Number(g.repeatCount || 1);
+                    const username = g.nickname || g.username || 'Anonymous';
+                    const giftName = g.giftName || 'Gift';
+                    const giftImage = g.giftPictureUrl || g.giftImage || '';
+
+                    console.log('[TopStreak] Processed gift:', { username, giftName, count, isStreakable });
 
                     if (!isStreakable) {
                         // Non-streak: treat as final count immediately
                         const previousCount = topStreak ? topStreak.count : 0;
                         topStreak = {
-                            username: g.username || g.nickname || 'Anonymous',
-                            giftName: g.giftName,
-                            giftImage: g.giftImage,
+                            username,
+                            giftName,
+                            giftImage,
                             count: count,
                             timestamp: Date.now()
                         };
+                        console.log(`✨ [TopStreak] New streak! ${username} - ${giftName} x${count}`);
                         animateCount(previousCount, count);
                         updateOverlay();
                         return;
@@ -209,13 +216,13 @@
                     // Streakable: aggregate by groupId and finalize on repeatEnd or timeout
                     let entry = comboGroups.get(groupId);
                     if (!entry) {
-                        entry = { lastCount: 0, timeoutId: null, username: g.username || g.nickname || 'Anonymous', giftName: g.giftName, giftImage: g.giftImage };
+                        entry = { lastCount: 0, timeoutId: null, username, giftName, giftImage };
                         comboGroups.set(groupId, entry);
                     }
                     entry.lastCount = Math.max(entry.lastCount || 0, count);
-                    entry.username = entry.username || g.username || g.nickname || 'Anonymous';
-                    entry.giftName = entry.giftName || g.giftName;
-                    entry.giftImage = entry.giftImage || g.giftImage;
+                    entry.username = entry.username || username;
+                    entry.giftName = entry.giftName || giftName;
+                    entry.giftImage = entry.giftImage || giftImage;
                     if (entry.timeoutId) clearTimeout(entry.timeoutId);
                     entry.timeoutId = setTimeout(() => {
                         const e = comboGroups.get(groupId);
@@ -238,6 +245,7 @@
                         clearTimeout(entry.timeoutId);
                         const previousCount = topStreak ? topStreak.count : 0;
                         const finalCount = entry.lastCount || count || 1;
+                        console.log(`🔥 [TopStreak] Streak ended! ${entry.username} - ${entry.giftName} x${finalCount}`);
                         topStreak = {
                             username: entry.username,
                             giftName: entry.giftName,
