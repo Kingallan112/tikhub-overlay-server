@@ -28263,7 +28263,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
-const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 const pink_png_1 = __importDefault(__webpack_require__(/*! ../assets/boxes/pink.png */ "./src/assets/boxes/pink.png"));
 const red_png_1 = __importDefault(__webpack_require__(/*! ../assets/boxes/red.png */ "./src/assets/boxes/red.png"));
 const orange_png_1 = __importDefault(__webpack_require__(/*! ../assets/boxes/orange.png */ "./src/assets/boxes/orange.png"));
@@ -28297,9 +28297,13 @@ const MIN_TICK_INTERVAL_START = 80; // ms, at start of spin
 const MIN_TICK_INTERVAL_END = 120; // ms, at end of spin
 const initialBoxImages = [pink_png_1.default, red_png_1.default, orange_png_1.default, yellow_png_1.default];
 const LOCAL_STORAGE_KEY = 'luckyWheelConfig'; // base key; instanceKey suffix will be appended
-const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, minimal, externalConfig, onConfigChange, onSpin, onSyncConfig, refreshTrigger, instanceKey = 'luckywheel' }, ref) => {
+const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, minimal = false, externalConfig, onConfigChange, onSpin, onSyncConfig, refreshTrigger, instanceKey = 'luckywheel' }, ref) => {
     const title = 'Lucky Wheel';
     const accentColor = instanceKey === 'luckywheel' ? '#7fff7f' : '#b388ff';
+    // Debug: Log minimal mode on mount
+    react_1.default.useEffect(() => {
+        console.log(`[LuckyWheel ${instanceKey}] Initialized with minimal=${minimal}, onTriggerAction=${!!onTriggerAction}`);
+    }, []);
     const [spinning, setSpinning] = (0, react_1.useState)(false);
     const [position, setPosition] = (0, react_1.useState)(0); // px offset
     const [winnerIdx, setWinnerIdx] = (0, react_1.useState)(null);
@@ -28534,8 +28538,9 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
                 // Trigger the winner's action if available (only once per spin)
                 // BUT ONLY in TikHub app mode, NOT in browser overlay (minimal mode)
                 const winnerBox = spinData.shuffledBoxes[winnerIdx];
+                console.log(`[LuckyWheel ${instanceKey}] Spin complete. Winner box:`, winnerBox, `minimal=${minimal}, hasAction=${!!winnerBox?.actionId}, hasCallback=${!!onTriggerAction}, alreadyTriggered=${actionTriggeredRef.current}`);
                 if (!minimal && winnerBox && winnerBox.actionId && onTriggerAction && !actionTriggeredRef.current) {
-                    console.log(`[LuckyWheel] Triggering action for winner: ${winnerBox.actionId}`);
+                    console.log(`[LuckyWheel ${instanceKey}] Triggering action for winner: ${winnerBox.actionId}`);
                     // Mark that action has been triggered for this spin
                     actionTriggeredRef.current = true;
                     // Only trigger once - prefer full action object if available, otherwise just ID
