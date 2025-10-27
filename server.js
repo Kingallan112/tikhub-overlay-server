@@ -317,6 +317,15 @@ app.post('/overlay/songrequest/update', (req, res) => {
     res.json({ success: true, message: 'Spotify data updated' });
 });
 
+// Goal Settings (GET endpoint for loading saved settings)
+app.get('/api/goal-settings', (req, res) => {
+    res.json({
+        success: true,
+        likeGoal: storage.state.likeGoal || { current: 0, goal: 100 },
+        followGoal: storage.state.followGoal || { current: 0, goal: 50 }
+    });
+});
+
 // Like Goal
 app.post('/overlay/likegoal/update', (req, res) => {
     const config = req.body;
@@ -500,6 +509,7 @@ app.use('*', (req, res) => {
             "GET /api/actions",
             "POST /api/actions",
             "POST /api/execute-action",
+            "GET /api/goal-settings",
             "POST /overlay/luckywheel/config",
             "POST /overlay/luckywheel/spin",
             "POST /overlay/luckywheel2/config",
