@@ -1085,7 +1085,66 @@
             
             connectTikTok();
 
-        // Test messages removed - using real TikTok events only
+            // Show preview messages if in iframe (for TikHub app preview)
+            function showPreviewMessages() {
+                if (window.self !== window.top) {
+                    console.log('[Chat Overlay] Loading in iframe - showing preview messages');
+                    
+                    // Sample chat messages with variety
+                    const previewMessages = [
+                        {
+                            uniqueId: 'CoolViewer123',
+                            nickname: 'CoolViewer123',
+                            comment: 'Hello! This is amazing! 🔥',
+                            profilePictureUrl: '',
+                            badges: [{ type: 'subscriber', name: 'VIP' }],
+                            timestamp: Date.now() - 240000
+                        },
+                        {
+                            uniqueId: 'TopGifter',
+                            nickname: 'TopGifter',
+                            comment: 'Great stream! Love the content! 🎉',
+                            profilePictureUrl: '',
+                            badges: [],
+                            timestamp: Date.now() - 180000
+                        },
+                        {
+                            uniqueId: 'AwesomeSub',
+                            nickname: 'AwesomeSub',
+                            comment: 'This is so entertaining! Keep it up! 👏',
+                            profilePictureUrl: '',
+                            badges: [{ type: 'subscriber', name: 'Subscriber' }],
+                            timestamp: Date.now() - 120000
+                        },
+                        {
+                            uniqueId: 'ViewerFan',
+                            nickname: 'ViewerFan',
+                            comment: 'First time watching, this is amazing! 💯',
+                            profilePictureUrl: '',
+                            badges: [],
+                            timestamp: Date.now() - 60000
+                        },
+                        {
+                            uniqueId: 'ChatSupporter',
+                            nickname: 'ChatSupporter',
+                            comment: "Can't wait for the next stream! ⭐",
+                            profilePictureUrl: '',
+                            badges: [{ type: 'moderator', name: 'Moderator' }],
+                            timestamp: Date.now()
+                        }
+                    ];
+                    
+                    // Add messages with a slight delay for smooth appearance
+                    previewMessages.forEach((msg, index) => {
+                        setTimeout(() => {
+                            tiktokChatMessage(msg);
+                        }, index * 300);
+                    });
+                }
+            }
+            
+            // Show preview after a short delay to ensure DOM is ready
+            setTimeout(showPreviewMessages, 500);
 
             // Note: We're not using postMessage anymore since the real browser overlay
             // is in a separate window. We use localStorage polling instead.
