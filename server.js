@@ -326,15 +326,6 @@ app.post('/overlay/songrequest/update', (req, res) => {
     res.json({ success: true, message: 'Spotify data updated' });
 });
 
-// Goal Settings (GET endpoint for loading saved settings)
-app.get('/api/goal-settings', (req, res) => {
-    res.json({
-        success: true,
-        likeGoal: storage.state.likeGoal || { current: 0, goal: 100 },
-        followGoal: storage.state.followGoal || { current: 0, goal: 50 }
-    });
-});
-
 // Like Goal
 app.post('/overlay/likegoal/update', (req, res) => {
     const config = req.body;
@@ -487,6 +478,32 @@ app.get('/api/goal-settings', (req, res) => {
     });
 });
 
+// Save goal settings (POST endpoint)
+app.post('/api/goal-settings', (req, res) => {
+    console.log('📝 [Goal Settings] Saving settings:', req.body);
+    
+    // Update likeGoal if provided
+    if (req.body.likeGoal) {
+        storage.state.likeGoal = { ...storage.state.likeGoal, ...req.body.likeGoal };
+        broadcast('likeGoal', { type: 'update', payload: storage.state.likeGoal });
+    }
+    
+    // Update followGoal if provided
+    if (req.body.followGoal) {
+        storage.state.followGoal = { ...storage.state.followGoal, ...req.body.followGoal };
+        broadcast('followGoal', { type: 'update', payload: storage.state.followGoal });
+    }
+    
+    console.log('✅ [Goal Settings] Settings saved and broadcasted');
+    
+    res.json({
+        success: true,
+        likeGoal: storage.state.likeGoal,
+        followGoal: storage.state.followGoal,
+        timestamp: Date.now()
+    });
+});
+
 // Test endpoints for goal overlays
 app.post('/api/test/like', (req, res) => {
     const { count = 1 } = req.body;
@@ -620,6 +637,7 @@ app.use('*', (req, res) => {
             "POST /api/actions",
             "POST /api/execute-action",
             "GET /api/goal-settings",
+            "POST /api/goal-settings",
             "POST /api/test/like",
             "POST /api/test/follow",
             "POST /overlay/luckywheel/config",
