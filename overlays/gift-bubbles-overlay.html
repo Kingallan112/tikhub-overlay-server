@@ -120,18 +120,46 @@
         }
 
                  .gift-name {
-            color: #333;
+            color: #fff;
              font-weight: bold;
              text-align: center;
              margin-bottom: 2px;
-            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+            text-shadow: 
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000,
+                0 0 3px rgba(0,0,0,0.8),
+                0 2px 4px rgba(0,0,0,0.6);
          }
 
          .username {
-            color: #555;
+            color: #fff;
              font-size: 0.8em;
              text-align: center;
-            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+             font-weight: 600;
+            text-shadow: 
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000,
+                0 0 3px rgba(0,0,0,0.8),
+                0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .coin-value {
+            color: #ffd700;
+            font-size: 0.7em;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 2px;
+            text-shadow: 
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000,
+                0 0 3px rgba(0,0,0,0.8),
+                0 2px 4px rgba(0,0,0,0.6);
         }
 
         @keyframes floatBubble {
@@ -285,6 +313,7 @@
                         <img src="${giftImageUrl}" class="gift-image" alt="${giftData.giftName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
                         <div class="gift-icon" style="display: none;">${this.getGiftIcon(giftData.giftName)}</div>
                         <div class="gift-name">${giftData.giftName}</div>
+                        <div class="coin-value">${giftData.coins.toLocaleString()} 💎</div>
                         <div class="username">@${giftData.username}</div>
                     `;
                 } else {
@@ -292,6 +321,7 @@
                     content.innerHTML = `
                         <div class="gift-icon">${this.getGiftIcon(giftData.giftName)}</div>
                         <div class="gift-name">${giftData.giftName}</div>
+                        <div class="coin-value">${giftData.coins.toLocaleString()} 💎</div>
                         <div class="username">@${giftData.username}</div>
                     `;
                 }
