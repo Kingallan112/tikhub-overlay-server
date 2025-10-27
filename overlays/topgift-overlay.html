@@ -108,8 +108,17 @@
     </div>
 
     <script>
-        let topGift = null;
+        // Start with default preview data
+        let topGift = {
+            username: 'GamerPro123',
+            giftName: 'Pegasus',
+            giftValue: 5000,
+            giftImage: 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/89a66f5f3c6a1e736c1a4c332e978442~tplv-obj.webp'
+        };
         let isConnected = false;
+
+        // Show preview immediately
+        updateOverlay();
 
         // Connect to WebSocket for real-time gift data
         const ws = new WebSocket('wss://tikhub-overlay-server.onrender.com/ws/topgift');
@@ -117,7 +126,7 @@
         ws.onopen = () => {
             console.log('✅ [TopGift] Connected to overlay WebSocket');
             isConnected = true;
-            updateConnectionStatus('Waiting for gifts...');
+            // Keep showing preview, don't show "Waiting for gifts..."
         };
 
         ws.onmessage = (event) => {

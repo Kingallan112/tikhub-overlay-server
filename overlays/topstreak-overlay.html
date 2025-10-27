@@ -114,12 +114,23 @@
     </div>
 
     <script>
-        let topStreak = null;
+        // Start with default preview data
+        let topStreak = {
+            username: 'StreamQueen',
+            giftName: 'Rose',
+            giftImage: 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp',
+            count: 12
+        };
         let isConnected = false;
         let streakData = new Map(); // Track streaks by user+gift combination
-        let displayCount = 0;
+        let displayCount = 12; // Start with preview count
         let isAnimating = false;
         let animationId = null;
+        
+        // Show preview immediately
+        setTimeout(() => {
+            updateOverlay();
+        }, 100);
 
         // Animation function for counting up
         function animateCount(from, to) {
@@ -176,7 +187,7 @@
         ws.onopen = () => {
             console.log('✅ [TopStreak] Connected to overlay WebSocket');
             isConnected = true;
-            updateConnectionStatus('Waiting for gift streaks...');
+            // Keep showing preview, don't show "Waiting for gift streaks..."
         };
 
         // Combo aggregation keyed by groupId for final streak display
