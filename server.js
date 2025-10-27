@@ -158,6 +158,12 @@ app.post('/event/gift', (req, res) => {
     // Broadcast to Gift vs Gift overlay
     broadcast('giftVsGift', { type: 'gift', ...giftData });
     
+    // Broadcast to Top Gift overlay
+    broadcast('topGift', { type: 'gift', giftData });
+    
+    // Broadcast to Top Streak overlay
+    broadcast('topStreak', { type: 'gift', giftData });
+    
     // Also broadcast to general clients
     broadcastAll({ type: 'tiktok-event', event: { type: 'gift', ...giftData } });
     
@@ -562,6 +568,9 @@ wss.on('connection', (ws, req) => {
         overlayType = 'giftVsGift';
     }
     
+    // Log WebSocket connection
+    console.log(`📡 WebSocket connected: ${overlayType} (path: ${path})`);
+    
     // Add to appropriate client set
     if (storage.clients[overlayType]) {
         storage.clients[overlayType].add(ws);
@@ -638,6 +647,8 @@ app.use('*', (req, res) => {
             "WebSocket: /ws/timer",
             "WebSocket: /ws/chat",
             "WebSocket: /ws/win-goal",
+            "WebSocket: /ws/topgift",
+            "WebSocket: /ws/topstreak",
             "WebSocket: /ws/giftvsgift"
         ]
     });
