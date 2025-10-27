@@ -627,6 +627,7 @@ app.use('*', (req, res) => {
             "POST /overlay/topstreak/update",
             "POST /overlay/giftvsgift/update",
             "GET /api/giftvsgift",
+            "POST /api/giftvsgift",
             "GET /state/:overlayType",
             "WebSocket: /ws/gift-bubbles",
             "WebSocket: /ws/luckywheel",
