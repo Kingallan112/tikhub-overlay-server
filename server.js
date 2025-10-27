@@ -432,6 +432,23 @@ app.get('/api/giftvsgift', (req, res) => {
     res.json(data);
 });
 
+// Save Gift vs Gift configuration (left/right gifts, settings)
+app.post('/api/giftvsgift', (req, res) => {
+    console.log('💾 [GiftVsGift] POST /api/giftvsgift - Saving config:', req.body);
+    
+    // Merge with existing state to preserve counts
+    storage.state.giftVsGift = {
+        ...storage.state.giftVsGift,
+        ...req.body
+    };
+    
+    // Broadcast the config update to all connected overlays
+    broadcast('giftVsGift', { type: 'gift-vs-gift-config', ...storage.state.giftVsGift });
+    console.log(`📡 [GiftVsGift] Config broadcasted to ${storage.clients.giftVsGift.size} clients`);
+    
+    res.json({ success: true, message: 'Gift vs gift config saved' });
+});
+
 // Generic event broadcast (for any TikTok event)
 app.post('/broadcast-event', (req, res) => {
     const { event, data } = req.body;
