@@ -101,10 +101,10 @@
     let isActivated = false; // Default to deactivated
 
     // Initialize WebSocket connection
-    const OVERLAY_SERVER_URL = 'wss://tikhub-overlay-server.onrender.com';
     function initWebSocket() {
       try {
-        ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/follow-goal');
+        let wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(wsProto + '://' + location.host + '/ws/follow-goal');
         
         ws.onopen = function() {
           console.log('[Follow Goal] WebSocket connected');
