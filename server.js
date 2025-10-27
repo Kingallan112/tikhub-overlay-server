@@ -551,6 +551,45 @@ app.post('/api/test/follow', (req, res) => {
     });
 });
 
+// Cut/Reset goal endpoints
+app.post('/api/cut/like', (req, res) => {
+    console.log('✂️ Cutting like goal (resetting to 0)');
+    
+    storage.state.likeGoal.current = 0;
+    
+    // Broadcast to overlays
+    broadcast('likeGoal', { 
+        type: 'like-goal-update', 
+        ...storage.state.likeGoal 
+    });
+    
+    res.json({ 
+        success: true, 
+        current: 0,
+        goal: storage.state.likeGoal.goal,
+        message: 'Like goal reset'
+    });
+});
+
+app.post('/api/cut/follow', (req, res) => {
+    console.log('✂️ Cutting follow goal (resetting to 0)');
+    
+    storage.state.followGoal.current = 0;
+    
+    // Broadcast to overlays
+    broadcast('followGoal', { 
+        type: 'follow-goal-update', 
+        ...storage.state.followGoal 
+    });
+    
+    res.json({ 
+        success: true, 
+        current: 0,
+        goal: storage.state.followGoal.goal,
+        message: 'Follow goal reset'
+    });
+});
+
 // WebSocket connection handler
 wss.on('connection', (ws, req) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -640,6 +679,8 @@ app.use('*', (req, res) => {
             "POST /api/goal-settings",
             "POST /api/test/like",
             "POST /api/test/follow",
+            "POST /api/cut/like",
+            "POST /api/cut/follow",
             "POST /overlay/luckywheel/config",
             "POST /overlay/luckywheel/spin",
             "POST /overlay/luckywheel2/config",
