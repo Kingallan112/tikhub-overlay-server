@@ -408,6 +408,17 @@ app.post('/overlay/giftvsgift/update', (req, res) => {
     res.json({ success: true, message: 'Gift vs gift updated' });
 });
 
+app.get('/api/giftvsgift', (req, res) => {
+    res.json(storage.state.giftVsGift || {
+        leftPoints: 0,
+        rightPoints: 0,
+        goal: 500,
+        goalBehavior: 'keep',
+        actionWinLeft: 'none',
+        actionWinRight: 'none'
+    });
+});
+
 // Generic event broadcast (for any TikTok event)
 app.post('/broadcast-event', (req, res) => {
     const { event, data } = req.body;
@@ -585,6 +596,7 @@ app.use('*', (req, res) => {
             "POST /overlay/topgift/update",
             "POST /overlay/topstreak/update",
             "POST /overlay/giftvsgift/update",
+            "GET /api/giftvsgift",
             "GET /state/:overlayType",
             "WebSocket: /ws/gift-bubbles",
             "WebSocket: /ws/luckywheel",
