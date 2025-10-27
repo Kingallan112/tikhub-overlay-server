@@ -155,6 +155,9 @@ app.post('/event/gift', (req, res) => {
     // Broadcast to gift bubble overlays
     broadcast('giftBubbles', { type: 'gift', giftData });
     
+    // Broadcast to Gift vs Gift overlay
+    broadcast('giftVsGift', { type: 'gift', ...giftData });
+    
     // Also broadcast to general clients
     broadcastAll({ type: 'tiktok-event', event: { type: 'gift', ...giftData } });
     
@@ -607,4 +610,5 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
+
 
