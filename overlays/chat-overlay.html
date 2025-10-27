@@ -1090,8 +1090,8 @@
                 if (window.self !== window.top) {
                     console.log('[Chat Overlay] Loading in iframe - showing preview messages');
                     
-                    // TikHub logo for preview avatars
-                    const tikhubLogo = 'https://raw.githubusercontent.com/Kingallan112/tikhub-overlay-server/main/favicon.png';
+                    // Use simple avatar (will show initials when no URL is provided)
+                    const defaultAvatar = 'https://ui-avatars.com/api/?name=TikHub&background=7fff7f&color=1a1d23&size=128';
                     
                     // Sample chat messages with variety
                     const previewMessages = [
@@ -1099,7 +1099,7 @@
                             uniqueId: 'CoolViewer123',
                             nickname: 'CoolViewer123',
                             comment: 'Hello! This is amazing! 🔥',
-                            profilePictureUrl: tikhubLogo,
+                            profilePictureUrl: 'https://ui-avatars.com/api/?name=CV&background=ff6b6b&color=fff&size=128',
                             badges: [{ type: 'subscriber', name: 'VIP' }],
                             timestamp: Date.now() - 240000
                         },
@@ -1107,7 +1107,7 @@
                             uniqueId: 'TopGifter',
                             nickname: 'TopGifter',
                             comment: 'Great stream! Love the content! 🎉',
-                            profilePictureUrl: tikhubLogo,
+                            profilePictureUrl: 'https://ui-avatars.com/api/?name=TG&background=667eea&color=fff&size=128',
                             badges: [],
                             timestamp: Date.now() - 180000
                         },
@@ -1115,7 +1115,7 @@
                             uniqueId: 'AwesomeSub',
                             nickname: 'AwesomeSub',
                             comment: 'This is so entertaining! Keep it up! 👏',
-                            profilePictureUrl: tikhubLogo,
+                            profilePictureUrl: 'https://ui-avatars.com/api/?name=AS&background=f093fb&color=fff&size=128',
                             badges: [{ type: 'subscriber', name: 'Subscriber' }],
                             timestamp: Date.now() - 120000
                         },
@@ -1123,7 +1123,7 @@
                             uniqueId: 'ViewerFan',
                             nickname: 'ViewerFan',
                             comment: 'First time watching, this is amazing! 💯',
-                            profilePictureUrl: tikhubLogo,
+                            profilePictureUrl: 'https://ui-avatars.com/api/?name=VF&background=4facfe&color=fff&size=128',
                             badges: [],
                             timestamp: Date.now() - 60000
                         },
@@ -1131,7 +1131,7 @@
                             uniqueId: 'ChatSupporter',
                             nickname: 'ChatSupporter',
                             comment: "Can't wait for the next stream! ⭐",
-                            profilePictureUrl: tikhubLogo,
+                            profilePictureUrl: 'https://ui-avatars.com/api/?name=CS&background=43e97b&color=fff&size=128',
                             badges: [{ type: 'moderator', name: 'Moderator' }],
                             timestamp: Date.now()
                         }
