@@ -29529,31 +29529,36 @@ const GiftVsGiftOverlay = ({ editor = false, actions = [], triggerAction, refres
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
         ws.onopen = () => {
-            console.log('[GiftVsGift] WebSocket connected for live gift events');
+            console.log('✅ [GiftVsGift Browser Overlay] WebSocket CONNECTED and ready to receive updates!');
+            console.log('✅ [GiftVsGift Browser Overlay] Listening for goal updates, gift events, and config changes');
         };
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 console.log('[GiftVsGift] Received WebSocket message:', data);
-                // Handle gift-vs-gift-update messages (goal updates, config changes)
-                if (data.type === 'gift-vs-gift-update') {
-                    console.log('[GiftVsGift] Received config update from server:', data);
+                // Handle gift-vs-gift-update AND gift-vs-gift-config messages (goal updates, config changes)
+                if (data.type === 'gift-vs-gift-update' || data.type === 'gift-vs-gift-config') {
+                    console.log(`🔔 [GiftVsGift Browser Overlay] Received ${data.type} from server:`, data);
                     // Update goal if present
                     if (data.goal !== undefined) {
-                        console.log(`[GiftVsGift] ✅ Updating goal from WebSocket: ${goal} → ${data.goal}`);
+                        console.log(`🎯 [GiftVsGift Browser Overlay] RECEIVED GOAL UPDATE via WebSocket!`);
+                        console.log(`🎯 [GiftVsGift Browser Overlay] Old goal: ${goal}`);
+                        console.log(`🎯 [GiftVsGift Browser Overlay] New goal: ${data.goal}`);
                         setGoal(data.goal);
+                        console.log(`✅ [GiftVsGift Browser Overlay] Goal state updated! UI should refresh now.`);
                     }
                     // Update counts if present
                     if (data.leftPoints !== undefined) {
-                        console.log(`[GiftVsGift] ✅ Updating left points from WebSocket: ${data.leftPoints}`);
+                        console.log(`[GiftVsGift] ✅ Updating left points from WebSocket: ${leftPoints} → ${data.leftPoints}`);
                         setLeftPoints(data.leftPoints);
                     }
                     if (data.rightPoints !== undefined) {
-                        console.log(`[GiftVsGift] ✅ Updating right points from WebSocket: ${data.rightPoints}`);
+                        console.log(`[GiftVsGift] ✅ Updating right points from WebSocket: ${rightPoints} → ${data.rightPoints}`);
                         setRightPoints(data.rightPoints);
                     }
                     // Update goal behavior if present
                     if (data.goalBehavior) {
+                        console.log(`[GiftVsGift] ✅ Updating goal behavior from WebSocket: ${data.goalBehavior}`);
                         setGoalBehavior(data.goalBehavior);
                     }
                     return; // Don't process further
@@ -29887,8 +29892,10 @@ const GiftVsGiftOverlay = ({ editor = false, actions = [], triggerAction, refres
                 // Calculate and update the goal
                 let newGoal = goal; // Default to current goal
                 if (goalBehavior === 'increase') {
-                    newGoal = goal + originalGoalRef.current;
-                    console.log(`🎯 Increasing gift vs gift goal: ${goal} → ${newGoal} - adding original goal: ${originalGoalRef.current}`);
+                    // If originalGoalRef is not set (0 or default 500), use current goal
+                    const incrementAmount = (originalGoalRef.current === 0 || originalGoalRef.current === 500) ? goal : originalGoalRef.current;
+                    newGoal = goal + incrementAmount;
+                    console.log(`🎯 Increasing gift vs gift goal: ${goal} → ${newGoal} - adding ${incrementAmount} (originalGoalRef: ${originalGoalRef.current})`);
                 }
                 else if (goalBehavior === 'double') {
                     newGoal = goal * 2;
@@ -30216,6 +30223,7 @@ const GiftVsGiftOverlay = ({ editor = false, actions = [], triggerAction, refres
                                         return allEffects.map(effect => ((0, jsx_runtime_1.jsx)("option", { value: effect.id, children: effect.name }, effect.id)));
                                     })()] })] })] }), (0, jsx_runtime_1.jsx)("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }, children: (0, jsx_runtime_1.jsx)("h2", { style: { color: '#7fff7f', margin: 0 }, children: "Gift VS Gift" }) }), (0, jsx_runtime_1.jsxs)("div", { style: { marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'center' }, children: [(0, jsx_runtime_1.jsxs)("div", { children: ["Goal: ", (0, jsx_runtime_1.jsx)("input", { type: "number", value: goal, onChange: e => {
                                     const newGoal = Number(e.target.value);
+                                    console.log(`[GiftVsGift] Manual goal change: ${goal} → ${newGoal}, setting originalGoalRef to ${newGoal}`);
                                     setGoal(newGoal);
                                     // Update original goal when manually changed
                                     originalGoalRef.current = newGoal;
@@ -30294,8 +30302,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 const client_1 = __webpack_require__(/*! react-dom/client */ "./node_modules/react-dom/client.js");
 const GiftVsGiftOverlay_1 = __webpack_require__(/*! ./overlays/GiftVsGiftOverlay */ "./src/overlays/GiftVsGiftOverlay.tsx");
+console.log('🎮 [GiftVsGift Standalone] Loading browser overlay...');
+console.log('🎮 [GiftVsGift Standalone] Editor mode: false (browser overlay)');
 const root = (0, client_1.createRoot)(document.getElementById('root'));
 root.render((0, jsx_runtime_1.jsx)(GiftVsGiftOverlay_1.GiftVsGiftOverlay, {}));
+console.log('🎮 [GiftVsGift Standalone] Overlay rendered!');
 
 })();
 
