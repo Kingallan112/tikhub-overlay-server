@@ -282,6 +282,19 @@ app.post('/api/actions', (req, res) => {
     }
 });
 
+// Execute action endpoint (browser overlay calls this, but actions are executed in TikHub app)
+app.post('/api/execute-action', (req, res) => {
+    const { action, actionId } = req.body;
+    console.log('🎯 Browser overlay requested action execution:', action?.name || actionId);
+    // Browser overlays are display-only. Actions are executed by the TikHub app.
+    // This endpoint exists to prevent 404 errors in the browser console.
+    res.json({ 
+        success: true, 
+        message: 'Action execution is handled by TikHub app',
+        note: 'Browser overlays are for display only'
+    });
+});
+
 // Song Requests
 app.post('/overlay/songrequest/add', (req, res) => {
     const request = req.body;
@@ -358,7 +371,7 @@ app.post('/overlay/wingoal/update', (req, res) => {
 // Timer
 app.post('/overlay/timer/update', (req, res) => {
     storage.state.timer = req.body;
-    broadcast('timer', { type: 'timer-update', ...req.body });
+    broadcast('timer', req.body);
     res.json({ success: true, message: 'Timer updated' });
 });
 
@@ -486,6 +499,7 @@ app.use('*', (req, res) => {
             "POST /broadcast-event",
             "GET /api/actions",
             "POST /api/actions",
+            "POST /api/execute-action",
             "POST /overlay/luckywheel/config",
             "POST /overlay/luckywheel/spin",
             "POST /overlay/luckywheel2/config",
