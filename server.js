@@ -437,9 +437,9 @@ wss.on('connection', (ws, req) => {
     
     if (path.includes('/gift-bubbles') || path.includes('/giftbubbles')) {
         overlayType = 'giftBubbles';
-    } else if (path.includes('/luckywheel2') || path.includes('/wheel2')) {
+    } else if (path.includes('/luckywheel2')) {
         overlayType = 'luckyWheel2';
-    } else if (path.includes('/luckywheel') || path.includes('/wheel')) {
+    } else if (path.includes('/luckywheel')) {
         overlayType = 'luckyWheel';
     } else if (path.includes('/songrequest') || path.includes('/song')) {
         overlayType = 'songRequest';
