@@ -373,13 +373,21 @@
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                console.log('[Gift Bubbles] Received WebSocket data:', data);
+                
                 if (data.type === 'gift' || data.event === 'gift') {
-                    // Handle both data formats
+                    // Server wraps in giftData, check both levels
+                    const source = data.giftData || data;
+                    
                     const giftData = {
-                        giftName: data.giftName || data.gift?.giftName || data.name || 'Gift',
-                        username: data.username || data.sender?.uniqueId || data.uniqueId || 'Viewer',
-                        coins: data.coins || data.diamondCount || data.gift?.diamondCount || 50
+                        giftName: source.giftName || source.gift?.giftName || source.name || 'Gift',
+                        username: source.nickname || source.username || source.uniqueId || 'Viewer',
+                        coins: source.diamondCount || source.coins || source.gift?.diamondCount || 50,
+                        giftPictureUrl: source.giftPictureUrl || source.giftImage || source.gift?.image || source.image || '',
+                        giftImage: source.giftPictureUrl || source.giftImage || source.gift?.image || source.image || ''
                     };
+                    
+                    console.log('[Gift Bubbles] Parsed gift data:', giftData);
                     overlay.createBubble(giftData);
                 }
             } catch (error) {
