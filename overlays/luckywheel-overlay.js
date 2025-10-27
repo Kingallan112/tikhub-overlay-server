@@ -28532,8 +28532,9 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
                 setWinnerIdx(winnerIdx);
                 setCurrentArrowIdx(winnerIdx);
                 // Trigger the winner's action if available (only once per spin)
+                // BUT ONLY in TikHub app mode, NOT in browser overlay (minimal mode)
                 const winnerBox = spinData.shuffledBoxes[winnerIdx];
-                if (winnerBox && winnerBox.actionId && onTriggerAction && !actionTriggeredRef.current) {
+                if (!minimal && winnerBox && winnerBox.actionId && onTriggerAction && !actionTriggeredRef.current) {
                     console.log(`[LuckyWheel] Triggering action for winner: ${winnerBox.actionId}`);
                     // Mark that action has been triggered for this spin
                     actionTriggeredRef.current = true;
@@ -28545,12 +28546,14 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
                     }
                     else {
                         console.log(`[LuckyWheel] No full action found, triggering with ID: ${winnerBox.actionId}`);
-                        // For browser overlay, just pass the ID - the overlay will handle the API call
                         onTriggerAction({ id: winnerBox.actionId });
                     }
                 }
-                else if (winnerBox && winnerBox.actionId && actionTriggeredRef.current) {
+                else if (!minimal && winnerBox && winnerBox.actionId && actionTriggeredRef.current) {
                     console.log(`[LuckyWheel] Action already triggered for this spin, skipping`);
+                }
+                else if (minimal && winnerBox && winnerBox.actionId) {
+                    console.log(`[LuckyWheel] Browser overlay mode - action execution disabled (actions only execute in TikHub app)`);
                 }
                 // Show winner notification with color
                 setWinnerNotification(`Winner:`);
