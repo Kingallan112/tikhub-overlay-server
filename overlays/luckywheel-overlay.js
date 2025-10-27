@@ -28271,6 +28271,10 @@ const winning_mp3_1 = __importDefault(__webpack_require__(/*! ../assets/sounds/w
 const WheelConfigPanel_1 = __importStar(__webpack_require__(/*! ./WheelConfigPanel */ "./src/components/WheelConfigPanel.tsx"));
 const boxes_1 = __webpack_require__(/*! ../assets/boxes */ "./src/assets/boxes/index.ts");
 const overlayUtils_1 = __webpack_require__(/*! ../utils/overlayUtils */ "./src/utils/overlayUtils.ts");
+// Detect if running on Render overlay server
+const isRenderOverlay = typeof window !== 'undefined' && window.location.hostname === 'tikhub-overlay-server.onrender.com';
+const giftSound = isRenderOverlay ? 'https://tikhub-overlay-server.onrender.com/assets/sounds/gift.mp3' : gift_mp3_1.default;
+const winSound = isRenderOverlay ? 'https://tikhub-overlay-server.onrender.com/assets/sounds/winning.mp3' : winning_mp3_1.default;
 // --- Visual constants to match GIF ---
 const BOX_SIZE = 96;
 const BOX_GAP = 12;
@@ -28314,6 +28318,7 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
     const [overlayOpacity, setOverlayOpacity] = (0, react_1.useState)(0); // Start transparent
     const [overlayVisible, setOverlayVisible] = (0, react_1.useState)(false); // Control visibility
     const [wheelConfig, setWheelConfig] = (0, react_1.useState)(() => {
+        // Always initialize from localStorage based on instanceKey
         const saved = localStorage.getItem(`${LOCAL_STORAGE_KEY}_${instanceKey}`);
         if (saved) {
             try {
@@ -28331,8 +28336,8 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
     const actionTriggeredRef = (0, react_1.useRef)(false);
     // Track if audio is enabled (requires user interaction)
     const [audioEnabled, setAudioEnabled] = (0, react_1.useState)(false);
-    // If externalConfig is provided, use it instead of local state
-    const effectiveConfig = externalConfig || wheelConfig;
+    // Browser overlay (minimal mode) uses externalConfig, TikHub app uses localStorage
+    const effectiveConfig = minimal && externalConfig ? externalConfig : wheelConfig;
     const boxesToRender = effectiveConfig.boxes && effectiveConfig.boxes.length > 0
         ? effectiveConfig.boxes
         : WheelConfigPanel_1.DEFAULT_BOXES;
@@ -28792,7 +28797,7 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
                 opacity: overlayOpacity,
                 transition: 'opacity 0.5s ease-in-out',
                 pointerEvents: overlayVisible ? 'auto' : 'none',
-            }, children: [(0, jsx_runtime_1.jsx)("audio", { ref: tickAudioRef, src: gift_mp3_1.default, preload: "auto" }), (0, jsx_runtime_1.jsx)("audio", { ref: winAudioRef, src: winning_mp3_1.default, preload: "auto" }), (0, jsx_runtime_1.jsxs)("div", { style: {
+            }, children: [(0, jsx_runtime_1.jsx)("audio", { ref: tickAudioRef, src: giftSound, preload: "auto" }), (0, jsx_runtime_1.jsx)("audio", { ref: winAudioRef, src: winSound, preload: "auto" }), (0, jsx_runtime_1.jsxs)("div", { style: {
                         background: '#333',
                         color: '#fff',
                         borderRadius: 16,
@@ -28926,7 +28931,7 @@ const LuckyWheelOverlay = (0, react_1.forwardRef)(({ actions, onTriggerAction, m
                                     background: `url(${winnerNotificationColor}) center/cover no-repeat`,
                                     border: '2px solid #fff',
                                     boxShadow: '0 2px 8px #0008',
-                                } }))] })), (0, jsx_runtime_1.jsx)("audio", { ref: tickAudioRef, src: gift_mp3_1.default, preload: "auto" }), (0, jsx_runtime_1.jsx)("audio", { ref: winAudioRef, src: winning_mp3_1.default, preload: "auto" }), (0, jsx_runtime_1.jsxs)("div", { style: {
+                                } }))] })), (0, jsx_runtime_1.jsx)("audio", { ref: tickAudioRef, src: giftSound, preload: "auto" }), (0, jsx_runtime_1.jsx)("audio", { ref: winAudioRef, src: winSound, preload: "auto" }), (0, jsx_runtime_1.jsxs)("div", { style: {
                             background: '#333',
                             color: '#fff',
                             borderRadius: 16,
@@ -29309,16 +29314,25 @@ function LuckyWheelOverlayRealtime() {
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                // Config updates
-                if ((!isWheel2 && data.type === 'wheel-config-update') || (isWheel2 && data.type === 'wheel2-config-update')) {
-                    setConfig(data.config);
-                    // Spin events
+                // Initial state on connect
+                if (data.type === 'initial-state') {
+                    console.log(`[LuckyWheelOverlay] Received initial state:`, data.state);
+                    if (data.state) {
+                        setConfig(data.state);
+                    }
                 }
+                // Config updates
+                else if ((!isWheel2 && data.type === 'wheel-config-update') || (isWheel2 && data.type === 'wheel2-config-update')) {
+                    console.log(`[LuckyWheelOverlay] Config update received:`, data.config);
+                    setConfig(data.config);
+                }
+                // Spin events
                 else if ((!isWheel2 && data.type === 'wheel-spin') || (isWheel2 && data.type === 'wheel2-spin')) {
                     if (overlayRef.current && typeof overlayRef.current.startSpin === 'function') {
                         overlayRef.current.startSpin({ shuffledBoxes: data.shuffledBoxes, winnerIdx: data.winnerIdx });
                     }
                 }
+                // Actions updated
                 else if (data.type === 'actions-updated') {
                     console.log('[LuckyWheelOverlay] Actions updated via WebSocket, refreshing action list');
                     setActions(data.actions);
