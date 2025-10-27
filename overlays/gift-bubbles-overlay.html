@@ -99,6 +99,26 @@
             filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
         }
 
+        .gift-image {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            margin-bottom: 4px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+            border-radius: 4px;
+        }
+
+        /* Larger gift images for bigger bubbles */
+        .large .gift-image {
+            width: 60px;
+            height: 60px;
+        }
+
+        .medium .gift-image {
+            width: 55px;
+            height: 55px;
+        }
+
                  .gift-name {
             color: #333;
              font-weight: bold;
@@ -255,11 +275,26 @@
                 // Add gift content
                 const content = document.createElement('div');
                 content.className = 'gift-content';
-                 content.innerHTML = `
-                    <div class="gift-icon">${this.getGiftIcon(giftData.giftName)}</div>
-                    <div class="gift-name">${giftData.giftName}</div>
-                    <div class="username">@${giftData.username}</div>
-                 `;
+                
+                // Check if gift has an image URL
+                const giftImageUrl = giftData.giftPictureUrl || giftData.giftImage || '';
+                
+                if (giftImageUrl) {
+                    // Use real gift image
+                    content.innerHTML = `
+                        <img src="${giftImageUrl}" class="gift-image" alt="${giftData.giftName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <div class="gift-icon" style="display: none;">${this.getGiftIcon(giftData.giftName)}</div>
+                        <div class="gift-name">${giftData.giftName}</div>
+                        <div class="username">@${giftData.username}</div>
+                    `;
+                } else {
+                    // Fallback to emoji
+                    content.innerHTML = `
+                        <div class="gift-icon">${this.getGiftIcon(giftData.giftName)}</div>
+                        <div class="gift-name">${giftData.giftName}</div>
+                        <div class="username">@${giftData.username}</div>
+                    `;
+                }
                 bubble.appendChild(content);
 
                 this.container.appendChild(bubble);
@@ -327,9 +362,9 @@
 
         const overlay = new RealBubbleOverlay();
 
-        // Connect to WebSocket for real gift events
-        const OVERLAY_SERVER_URL = 'wss://tikhub-overlay-server.onrender.com';
-        const ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/gift-bubbles');
+        // Connect to WebSocket for real gift events (use same host/port as overlay server)
+        const wsUrl = (location.origin.replace(/^http/, 'ws')) + '/ws/gift-bubbles';
+        const ws = new WebSocket(wsUrl);
         
         ws.onopen = () => {
             console.log('Gift Bubbles Overlay: Connected to WebSocket server');
