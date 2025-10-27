@@ -313,7 +313,6 @@
                         <img src="${giftImageUrl}" class="gift-image" alt="${giftData.giftName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
                         <div class="gift-icon" style="display: none;">${this.getGiftIcon(giftData.giftName)}</div>
                         <div class="gift-name">${giftData.giftName}</div>
-                        <div class="coin-value">${giftData.coins.toLocaleString()} 💎</div>
                         <div class="username">@${giftData.username}</div>
                     `;
                 } else {
@@ -321,7 +320,6 @@
                     content.innerHTML = `
                         <div class="gift-icon">${this.getGiftIcon(giftData.giftName)}</div>
                         <div class="gift-name">${giftData.giftName}</div>
-                        <div class="coin-value">${giftData.coins.toLocaleString()} 💎</div>
                         <div class="username">@${giftData.username}</div>
                     `;
                 }
