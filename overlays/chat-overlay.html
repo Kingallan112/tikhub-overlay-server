@@ -1103,6 +1103,10 @@
                     
                     console.log('CONFIG updated via postMessage:', CONFIG);
                     applySettings();
+                } else if (event.data && event.data.type === 'chat') {
+                    // Handle test chat messages from TikHub app
+                    console.log('[Chat Overlay] Received test chat message:', event.data.data);
+                    tiktokChatMessage(event.data.data);
                 } else if (event.data && (event.data.type === 'overlay-toggle' || event.data.type === 'chat-overlay-toggle')) {
                     console.log('=== OVERLAY TOGGLE RECEIVED ===');
                     console.log('Overlay enabled:', event.data.enabled);
