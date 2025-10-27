@@ -643,6 +643,114 @@ wss.on('connection', (ws, req) => {
         }
     }
     
+    // Handle incoming messages from clients
+    ws.on('message', (message) => {
+        try {
+            const data = JSON.parse(message.toString());
+            console.log(`📨 [${overlayType}] Received message:`, data);
+            
+            // Handle goal-completed events from browser overlays
+            if (data.type === 'goal-completed') {
+                console.log(`🎉 [${overlayType}] Goal completed! Broadcasting to all clients...`);
+                
+                const goalType = data.goalType; // 'like' or 'follow'
+                const { count, goal, whenReached, actionOnFinish } = data;
+                
+                // Update server state
+                if (goalType === 'like' && storage.state.likeGoal) {
+                    // Store original goal if not already stored
+                    if (!storage.state.likeGoal.originalGoal) {
+                        storage.state.likeGoal.originalGoal = storage.state.likeGoal.goal || 100;
+                    }
+                    const originalGoal = storage.state.likeGoal.originalGoal;
+                    let newGoal = goal;
+                    
+                    if (whenReached === 'double') {
+                        newGoal = goal * 2;
+                    } else if (whenReached === 'increase') {
+                        newGoal = goal + originalGoal;
+                    } else if (whenReached === 'reset') {
+                        newGoal = originalGoal;
+                    } else if (whenReached === 'hide') {
+                        newGoal = 999999;
+                    }
+                    
+                    storage.state.likeGoal.current = 0;
+                    storage.state.likeGoal.goal = newGoal;
+                    
+                    console.log(`🎯 Like goal updated: ${goal} → ${newGoal} (behavior: ${whenReached})`);
+                    
+                    // Broadcast to all clients
+                    broadcastAll({ 
+                        type: 'goal-completed', 
+                        goalType: 'like',
+                        count: 0,
+                        goal: newGoal,
+                        whenReached,
+                        actionOnFinish
+                    });
+                    
+                    // Broadcast reset count to like goal overlays
+                    broadcast('likeGoal', {
+                        type: 'reset-count'
+                    });
+                    
+                    // Broadcast updated goal to like goal overlays
+                    broadcast('likeGoal', {
+                        type: 'update-goal',
+                        newGoal: newGoal
+                    });
+                    
+                } else if (goalType === 'follow' && storage.state.followGoal) {
+                    // Store original goal if not already stored
+                    if (!storage.state.followGoal.originalGoal) {
+                        storage.state.followGoal.originalGoal = storage.state.followGoal.goal || 50;
+                    }
+                    const originalGoal = storage.state.followGoal.originalGoal;
+                    let newGoal = goal;
+                    
+                    if (whenReached === 'double') {
+                        newGoal = goal * 2;
+                    } else if (whenReached === 'increase') {
+                        newGoal = goal + originalGoal;
+                    } else if (whenReached === 'reset') {
+                        newGoal = originalGoal;
+                    } else if (whenReached === 'hide') {
+                        newGoal = 999999;
+                    }
+                    
+                    storage.state.followGoal.current = 0;
+                    storage.state.followGoal.goal = newGoal;
+                    
+                    console.log(`🎯 Follow goal updated: ${goal} → ${newGoal} (behavior: ${whenReached})`);
+                    
+                    // Broadcast to all clients
+                    broadcastAll({ 
+                        type: 'goal-completed', 
+                        goalType: 'follow',
+                        count: 0,
+                        goal: newGoal,
+                        whenReached,
+                        actionOnFinish
+                    });
+                    
+                    // Broadcast reset count to follow goal overlays
+                    broadcast('followGoal', {
+                        type: 'reset-count'
+                    });
+                    
+                    // Broadcast updated goal to follow goal overlays
+                    broadcast('followGoal', {
+                        type: 'update-goal',
+                        newGoal: newGoal
+                    });
+                }
+            }
+        } catch (error) {
+            console.error(`Error parsing WebSocket message from ${overlayType}:`, error);
+        }
+    });
+    
     // Handle disconnection
     ws.on('close', () => {
         if (storage.clients[overlayType]) {
