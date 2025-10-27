@@ -1090,13 +1090,16 @@
                 if (window.self !== window.top) {
                     console.log('[Chat Overlay] Loading in iframe - showing preview messages');
                     
+                    // TikHub logo for preview avatars
+                    const tikhubLogo = 'https://raw.githubusercontent.com/Kingallan112/tikhub-overlay-server/main/favicon.png';
+                    
                     // Sample chat messages with variety
                     const previewMessages = [
                         {
                             uniqueId: 'CoolViewer123',
                             nickname: 'CoolViewer123',
                             comment: 'Hello! This is amazing! 🔥',
-                            profilePictureUrl: '',
+                            profilePictureUrl: tikhubLogo,
                             badges: [{ type: 'subscriber', name: 'VIP' }],
                             timestamp: Date.now() - 240000
                         },
@@ -1104,7 +1107,7 @@
                             uniqueId: 'TopGifter',
                             nickname: 'TopGifter',
                             comment: 'Great stream! Love the content! 🎉',
-                            profilePictureUrl: '',
+                            profilePictureUrl: tikhubLogo,
                             badges: [],
                             timestamp: Date.now() - 180000
                         },
@@ -1112,7 +1115,7 @@
                             uniqueId: 'AwesomeSub',
                             nickname: 'AwesomeSub',
                             comment: 'This is so entertaining! Keep it up! 👏',
-                            profilePictureUrl: '',
+                            profilePictureUrl: tikhubLogo,
                             badges: [{ type: 'subscriber', name: 'Subscriber' }],
                             timestamp: Date.now() - 120000
                         },
@@ -1120,7 +1123,7 @@
                             uniqueId: 'ViewerFan',
                             nickname: 'ViewerFan',
                             comment: 'First time watching, this is amazing! 💯',
-                            profilePictureUrl: '',
+                            profilePictureUrl: tikhubLogo,
                             badges: [],
                             timestamp: Date.now() - 60000
                         },
@@ -1128,7 +1131,7 @@
                             uniqueId: 'ChatSupporter',
                             nickname: 'ChatSupporter',
                             comment: "Can't wait for the next stream! ⭐",
-                            profilePictureUrl: '',
+                            profilePictureUrl: tikhubLogo,
                             badges: [{ type: 'moderator', name: 'Moderator' }],
                             timestamp: Date.now()
                         }
