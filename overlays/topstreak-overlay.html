@@ -102,10 +102,11 @@
             };
 
             let settings = { ...defaultSettings };
+            const defaultStreakImage = 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp';
             let topStreak = {
                 username: 'Viewer',
                 streakValue: 0,
-                streakImage: ''
+                streakImage: defaultStreakImage
             };
             let isConnected = false;
 
@@ -189,8 +190,9 @@
                 const usernameEl = document.getElementById('username');
                 const valueEl = document.getElementById('streakValue');
 
-                if (settings.giftImageVisible && topStreak.streakImage) {
-                    imageEl.style.backgroundImage = `url(${topStreak.streakImage})`;
+                const imageSource = topStreak.streakImage || defaultStreakImage;
+                if (settings.giftImageVisible) {
+                    imageEl.style.backgroundImage = `url(${imageSource})`;
                 } else {
                     imageEl.style.backgroundImage = 'none';
                 }
