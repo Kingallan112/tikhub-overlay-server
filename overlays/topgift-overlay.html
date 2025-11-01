@@ -102,11 +102,12 @@
             };
 
             let settings = { ...defaultSettings };
+            const defaultGiftImage = 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/1d067d13988e8754ed6adbebd89b9ee8.png~tplv-obj.webp';
             let topGift = {
                 username: 'Viewer',
                 giftName: 'Gift',
                 giftValue: 0,
-                giftImage: ''
+                giftImage: defaultGiftImage
             };
             let isConnected = false;
 
@@ -190,8 +191,9 @@
                 const usernameEl = document.getElementById('username');
                 const valueEl = document.getElementById('giftValue');
 
-                if (settings.giftImageVisible && topGift.giftImage) {
-                    imageEl.style.backgroundImage = `url(${topGift.giftImage})`;
+                const imageSource = topGift.giftImage || defaultGiftImage;
+                if (settings.giftImageVisible) {
+                    imageEl.style.backgroundImage = `url(${imageSource})`;
                 } else {
                     imageEl.style.backgroundImage = 'none';
                 }
