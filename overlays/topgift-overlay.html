@@ -271,3 +271,29 @@
     </script>
 </body>
 </html>
+
+
+            // Apply settings to elements
+            document.getElementById('title').textContent = title;
+            document.getElementById('title').style.fontSize = titleSize + 'px';
+            document.getElementById('username').style.fontSize = usernameSize + 'px';
+            document.getElementById('giftValue').style.fontSize = fontSize + 'px';
+            document.getElementById('title').style.color = titleColor;
+            document.getElementById('username').style.color = usernameColor;
+            document.getElementById('giftValue').style.color = counterColor;
+            
+            // Apply font family to all text elements
+            const textElements = document.querySelectorAll('.title, .username, .gift-value');
+            textElements.forEach(el => {
+                el.style.fontFamily = fontFamily;
+            });
+
+            // Apply gift image opacity
+            document.getElementById('giftImage').style.opacity = giftImageOpacity / 100;
+        }
+
+        // Load settings when page loads
+        loadSettings();
+    </script>
+</body>
+</html>

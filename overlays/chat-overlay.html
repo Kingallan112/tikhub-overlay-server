@@ -696,7 +696,8 @@
 
             const template = chatTemplate;
             const clone = template.content.cloneNode(true);
-            const messageId = data.msgId;
+            // Generate a unique messageId if missing (using msgId, timestamp, userId, and comment hash)
+            const messageId = data.msgId || `chat_${Date.now()}_${data.userId || data.uniqueId || 'unknown'}_${data.comment.substring(0, 20).replace(/\s/g, '')}`;
             const userId = data.userId;
 
             const elements = [...clone.querySelectorAll('[class]')];
@@ -907,6 +908,12 @@
         }
 
         function addMessageItem(platform, clone, classes, userId, messageId) {
+            // Check if message with this ID already exists to prevent duplicates
+            if (messageId && document.getElementById(messageId)) {
+                console.log('[Chat Overlay] Duplicate message detected, skipping:', messageId);
+                return;
+            }
+
             const item = clone.querySelector('.item');
             item.id = messageId;
             item.setAttribute('data-user', userId);
@@ -930,6 +937,12 @@
         }
 
         function addEventItem(platform, clone, classes, userId, messageId) {
+            // Check if message with this ID already exists to prevent duplicates
+            if (messageId && document.getElementById(messageId)) {
+                console.log('[Chat Overlay] Duplicate event detected, skipping:', messageId);
+                return null;
+            }
+
             const item = clone.querySelector('.event');
             item.id = messageId;
             item.setAttribute('data-user', userId);
