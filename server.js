@@ -46,7 +46,8 @@ const storage = {
         timer: { remaining: 0, isRunning: false },
         topGift: { topGifter: null, gifts: [] },
         topStreak: { topStreaker: null, streaks: [] },
-        giftVsGift: { team1: { name: 'Team 1', score: 0 }, team2: { name: 'Team 2', score: 0 } }
+        giftVsGift: { team1: { name: 'Team 1', score: 0 }, team2: { name: 'Team 2', score: 0 } },
+        chatOverlaySettings: null
     },
     
     // Session management
