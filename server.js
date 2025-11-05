@@ -257,6 +257,27 @@ app.post('/api/chat-event', (req, res) => {
     res.json({ success: true, sentTo: storage.clients.chat.size, message: 'Chat event broadcasted' });
 });
 
+// Chat Overlay Settings API
+app.post('/api/chat-overlay', (req, res) => {
+    const settings = req.body.settings || req.body;
+    console.log('⚙️ Received chat overlay settings update:', settings);
+    
+    // Store settings in state
+    storage.state.chatOverlaySettings = settings;
+    
+    // Broadcast to all connected chat overlay clients
+    broadcast('chat', { 
+        type: 'chat-overlay-settings-update', 
+        settings: settings 
+    });
+    
+    res.json({ 
+        success: true, 
+        sentTo: storage.clients.chat.size,
+        message: 'Chat overlay settings updated and broadcasted' 
+    });
+});
+
 app.post('/event/share', (req, res) => {
     const shareData = req.body;
     console.log('📤 Received share event:', shareData);
