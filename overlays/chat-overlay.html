@@ -1048,6 +1048,14 @@
                             }
                         }
                         
+                        // Handle settings updates from server
+                        if (data.type === 'chat-overlay-settings-update' || data.type === 'settings-update') {
+                            const newSettings = data.settings || data;
+                            console.log('[Chat Overlay] Received settings update via WebSocket:', newSettings);
+                            applySettings(newSettings);
+                            processed = true;
+                        }
+                        
                         // Handle direct TikTok events (only if not already processed)
                         if (!processed) {
                             if (data.type === 'chat' || data.event === 'chat') {
@@ -1143,10 +1151,10 @@
                     msgId: 'demo-1',
                     userId: 'demo_user_1',
                     uniqueId: 'demo_user_1',
-                    nickname: 'DemoUser1',
+                                        nickname: 'DemoUser1',
                     comment: 'This is a preview of the chat overlay! 👋',
                     timestamp: Date.now(),
-                                            profilePictureUrl: '/Tikhub.png'
+                    profilePictureUrl: 'https://raw.githubusercontent.com/Kingallan112/tikhub-overlay-server/main/assets/Tikhub.png'
                 }).catch(err => {
                     console.error('[Chat Overlay] Error adding demo message 1:', err);
                     // Fallback: add directly to container if function fails
@@ -1157,7 +1165,7 @@
                         fallback.innerHTML = `
                             <div class="message">
                                 <div class="info">
-                                    <span class="avatar"><img src="/Tikhub.png" onerror="this.src='https://via.placeholder.com/32x32/4CAF50/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
+                                    <span class="avatar"><img src="https://raw.githubusercontent.com/Kingallan112/tikhub-overlay-server/main/assets/Tikhub.png" onerror="this.src='https://via.placeholder.com/32x32/4CAF50/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
                                     <span class="user">TikHub Demo</span>
                                 </div>
                                 <div class="actual-message">This is a preview of the chat overlay! 👋</div>
@@ -1173,10 +1181,10 @@
                         msgId: 'demo-2',
                         userId: 'demo_user_2',
                         uniqueId: 'demo_user_2',
-                        nickname: 'DemoUser2',
-                        comment: 'Chat messages will appear here in real-time! 💬',
-                        timestamp: Date.now(),
-                        profilePictureUrl: '/Tikhub.png'
+                                            nickname: 'DemoUser2',
+                    comment: 'Chat messages will appear here in real-time! 💬',
+                    timestamp: Date.now(),
+                    profilePictureUrl: 'https://raw.githubusercontent.com/Kingallan112/tikhub-overlay-server/main/assets/Tikhub.png'
                     }).catch(err => {
                         console.error('[Chat Overlay] Error adding demo message 2:', err);
                         // Fallback: add directly to container if function fails
@@ -1187,7 +1195,7 @@
                             fallback.innerHTML = `
                                 <div class="message">
                                     <div class="info">
-                                                                            <span class="avatar"><img src="/Tikhub.png" onerror="this.src='https://via.placeholder.com/32x32/2196F3/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
+                                                                            <span class="avatar"><img src="https://raw.githubusercontent.com/Kingallan112/tikhub-overlay-server/main/assets/Tikhub.png" onerror="this.src='https://via.placeholder.com/32x32/2196F3/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
                                     <span class="user">TikHub User</span>
                                     </div>
                                     <div class="actual-message">Chat messages will appear here in real-time! 💬</div>
@@ -1213,13 +1221,14 @@
             container.innerHTML = '';
             
             // Add demo message 1 directly
+            const logoUrl = 'https://raw.githubusercontent.com/Kingallan112/tikhub-overlay-server/main/assets/Tikhub.png';
             const msg1 = document.createElement('div');
             msg1.id = 'demo-1';
             msg1.className = 'item';
             msg1.innerHTML = `
                 <div class="message" style="background: rgba(76, 175, 80, 0.2); border-left: 3px solid #4CAF50;">
                     <div class="info">
-                        <span class="avatar"><img src="/Tikhub.png" onerror="this.src='https://via.placeholder.com/32x32/4CAF50/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
+                        <span class="avatar"><img src="${logoUrl}" onerror="this.src='https://via.placeholder.com/32x32/4CAF50/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
                         <span class="user" style="color: #4CAF50; font-weight: bold;">TikHub Demo</span>
                     </div>
                     <div class="actual-message" style="color: #fff; margin-top: 4px;">This is a preview of the chat overlay! 👋</div>
@@ -1235,7 +1244,7 @@
                 msg2.innerHTML = `
                     <div class="message" style="background: rgba(33, 150, 243, 0.2); border-left: 3px solid #2196F3;">
                         <div class="info">
-                            <span class="avatar"><img src="/Tikhub.png" onerror="this.src='https://via.placeholder.com/32x32/2196F3/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
+                            <span class="avatar"><img src="${logoUrl}" onerror="this.src='https://via.placeholder.com/32x32/2196F3/fff?text=T'" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>
                             <span class="user" style="color: #2196F3; font-weight: bold;">TikHub User</span>
                         </div>
                         <div class="actual-message" style="color: #fff; margin-top: 4px;">Chat messages will appear here in real-time! 💬</div>
@@ -1289,24 +1298,8 @@
                 }
             });
             
-            // Poll localStorage for settings updates (for browser overlay window)
-            let lastSettingsHash = '';
-            setInterval(() => {
-                try {
-                    const tempConfig = localStorage.getItem('chat_overlay_temp_config');
-                    if (tempConfig) {
-                        const newSettings = JSON.parse(tempConfig);
-                        const newHash = JSON.stringify(newSettings);
-                        if (newHash !== lastSettingsHash) {
-                            lastSettingsHash = newHash;
-                            console.log('[Chat Overlay] Received settings update via localStorage:', newSettings);
-                            applySettings(newSettings);
-                        }
-                    }
-                } catch (error) {
-                    // Ignore errors
-                }
-            }, 500); // Check every 500ms
+            // Settings updates are received via WebSocket from the server
+            // The Electron app sends settings to the Render server, which broadcasts to all connected clients
         });
     </script>
 </body>

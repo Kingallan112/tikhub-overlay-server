@@ -74,57 +74,6 @@
     // Connect to Render overlay server via WebSocket
     const OVERLAY_SERVER_URL = 'wss://tikhub-overlay-server.onrender.com';
     let ws = null;
-    
-    // Persist last known values to prevent reset to 0/5
-    let lastKnownCount = localStorage.getItem('win-goal-count');
-    let lastKnownTotal = localStorage.getItem('win-goal-total');
-    
-    // Initialize with last known values or defaults
-    if (lastKnownCount !== null) {
-      document.getElementById('win-count').textContent = lastKnownCount;
-    }
-    if (lastKnownTotal !== null) {
-      document.getElementById('win-goal-num').textContent = lastKnownTotal;
-    }
-
-    function updateDisplay(data) {
-      const el = document.getElementById('win-goal');
-      
-      // Only update count if we have a valid current value (not null/undefined)
-      if (data.current !== null && data.current !== undefined) {
-        const countStr = String(data.current);
-        document.getElementById('win-count').textContent = countStr;
-        localStorage.setItem('win-goal-count', countStr);
-        lastKnownCount = countStr;
-      } else if (lastKnownCount !== null) {
-        // Use last known value if current is missing
-        document.getElementById('win-count').textContent = lastKnownCount;
-      }
-      
-      // Only update total if we have a valid total value (not null/undefined)
-      if (data.total !== null && data.total !== undefined) {
-        const totalStr = String(data.total);
-        document.getElementById('win-goal-num').textContent = totalStr;
-        localStorage.setItem('win-goal-total', totalStr);
-        lastKnownTotal = totalStr;
-      } else if (lastKnownTotal !== null) {
-        // Use last known value if total is missing
-        document.getElementById('win-goal-num').textContent = lastKnownTotal;
-      }
-      
-      // Apply any custom styles
-      if (data.style) {
-        el.style.background = data.style.backgroundColor || '#23262f';
-        el.style.fontFamily = data.style.font || 'Arial, sans-serif';
-        el.style.fontSize = data.style.fontSize ? data.style.fontSize + 'px' : '48px';
-        el.style.color = data.style.winTextColor || '#fff';
-        el.style.border = data.style.enableFontBorder ? `2px solid ${data.style.borderColor || '#000'}` : 'none';
-        el.querySelector('.label').textContent = data.style.winGameText || 'Win';
-        el.querySelector('.counter').style.background = data.style.counterBackgroundColor || '#2a2a2d';
-        el.querySelector('.counter').style.color = data.style.counterColor || '#fff';
-        el.querySelector('.slash').style.color = data.style.winTextColor || '#fff';
-      }
-    }
 
     function connectWebSocket() {
       ws = new WebSocket(OVERLAY_SERVER_URL + '/ws/win-goal');
@@ -138,11 +87,43 @@
           const data = JSON.parse(event.data);
           console.log('[Win Goal] Received update:', data);
           
-          // Update the overlay with the data (will use last known values if current/total are missing)
-          updateDisplay(data);
+          // Update the overlay with the data
+          document.getElementById('win-count').textContent = String(data.current ?? '0');
+          document.getElementById('win-goal-num').textContent = String(data.total ?? '5');
+          
+          // Apply any custom styles
+          const el = document.getElementById('win-goal');
+          if (data.style) {
+            el.style.background = data.style.backgroundColor || '#23262f';
+            el.style.fontFamily = data.style.font || 'Arial, sans-serif';
+            el.style.fontSize = data.style.fontSize ? data.style.fontSize + 'px' : '48px';
+            el.style.color = data.style.winTextColor || '#fff';
+            el.style.border = data.style.enableFontBorder ? `2px solid ${data.style.borderColor || '#000'}` : 'none';
+            el.querySelector('.label').textContent = data.style.winGameText || 'Win';
+            el.querySelector('.counter').style.background = data.style.counterBackgroundColor || '#2a2a2d';
+            el.querySelector('.counter').style.color = data.style.counterColor || '#fff';
+            el.querySelector('.slash').style.color = data.style.winTextColor || '#fff';
+          }
         } catch (error) {
           console.error('[Win Goal] Error parsing message:', error);
         }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('[Win Goal] WebSocket error:', error);
+      };
+      
+      ws.onclose = () => {
+        console.log('[Win Goal] ⚠️ Disconnected, reconnecting in 3s...');
+        setTimeout(connectWebSocket, 3000);
+      };
+    }
+
+    connectWebSocket();
+  </script>
+</body>
+</html>
+
       };
       
       ws.onerror = (error) => {
