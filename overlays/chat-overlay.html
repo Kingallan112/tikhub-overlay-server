@@ -599,32 +599,40 @@
             if (data.isModerator) classes.push('mod');
             if (data.isSubscriber) classes.push('sub');
 
-            header.remove();
-            firstMessage.remove();
-            sharedChat.remove();
-            reply.remove();
-            pronoun.remove();
+            // Remove elements only if they exist
+            if (header) header.remove();
+            if (firstMessage) firstMessage.remove();
+            if (sharedChat) sharedChat.remove();
+            if (reply) reply.remove();
+            if (pronoun) pronoun.remove();
 
-            if (CONFIG.showAvatars) avatar.innerHTML = `<img src="${await getTikTokAvatar(data)}">`; 
-            else avatar.remove();
+            if (CONFIG.showAvatars && avatar) {
+                avatar.innerHTML = `<img src="${await getTikTokAvatar(data)}">`;
+            } else if (avatar) {
+                avatar.remove();
+            }
             
-            if (CONFIG.showBadges) {
+            if (CONFIG.showBadges && badges) {
                 const badgesHTML = await getTikTokBadges(data);
                 if (!badgesHTML) { 
                     badges.remove(); 
                 } else { 
                     badges.innerHTML = badgesHTML; 
                 }
-            } else { 
+            } else if (badges) { 
                 badges.remove(); 
             }
 
             const color = createRandomColor(data.uniqueId);
-            user.style.color = color;
-            user.textContent = data.nickname;
+            if (user) {
+                user.style.color = color;
+                user.textContent = data.nickname;
+            }
             
-            message.textContent = data.comment;
-            await getTikTokEmotes(data, message);
+            if (message) {
+                message.textContent = data.comment;
+                await getTikTokEmotes(data, message);
+            }
 
             addMessageItem('tiktok', clone, classes, userId, messageId);
         }
@@ -660,13 +668,12 @@
 
             const classes = ['tiktok', 'follow'];
 
-            header.remove();
+            if (header) header.remove();
             
-            user.textContent = data.nickname;
-            action.innerHTML = ` followed you`;
-            value.innerHTML = `👋`;
-
-            message.remove();
+            if (user) user.textContent = data.nickname;
+            if (action) action.innerHTML = ` followed you`;
+            if (value) value.innerHTML = `👋`;
+            if (message) message.remove();
 
             addEventItem('tiktok', clone, classes, userId, messageId);
         }
@@ -702,26 +709,28 @@
 
             const classes = ['tiktok', 'gift'];
 
-            header.remove();
+            if (header) header.remove();
             
-            user.textContent = data.nickname || data.uniqueId || 'Viewer';
-            action.innerHTML = ` gifted you `;
+            if (user) user.textContent = data.nickname || data.uniqueId || 'Viewer';
+            if (action) action.innerHTML = ` gifted you `;
             
             // Use gift image from data, with fallback to availableGifts
             const giftImage = data.giftImage || await getGiftImageFromName(data.giftName);
             const giftName = data.giftName || 'Gift';
             const repeatCount = data.repeatCount || data.repetition || 1;
             
-            value.innerHTML = `<span class="gift-info">
-                <span class="gift-image">
-                    <img src="${giftImage}" alt="${giftName}" onerror="this.src='https://via.placeholder.com/48x48/666/fff?text=🎁'">
-                </span>
-                <span class="gift-value">
-                    ${repeatCount} <img src="https://p16-webcast.tiktokcdn.com/img/alisg/webcast-sg/resource/de31974d7a94525c6f31872b5b38f76e.png~tplv-obj.webp" alt="coins" style="width: 16px; height: 16px;">
-                </span>
-            </span>`;
+            if (value) {
+                value.innerHTML = `<span class="gift-info">
+                    <span class="gift-image">
+                        <img src="${giftImage}" alt="${giftName}" onerror="this.src='https://via.placeholder.com/48x48/666/fff?text=🎁'">
+                    </span>
+                    <span class="gift-value">
+                        ${repeatCount} <img src="https://p16-webcast.tiktokcdn.com/img/alisg/webcast-sg/resource/de31974d7a94525c6f31872b5b38f76e.png~tplv-obj.webp" alt="coins" style="width: 16px; height: 16px;">
+                    </span>
+                </span>`;
+            }
 
-            message.remove();
+            if (message) message.remove();
 
             addEventItem('tiktok', clone, classes, userId, messageId);
         }
@@ -805,6 +814,11 @@
 
         function addMessageItem(platform, clone, classes, userId, messageId) {
             const item = clone.querySelector('.item');
+            if (!item) {
+                console.error('[Chat Overlay] Could not find .item element in template');
+                return;
+            }
+            
             item.id = messageId;
             item.setAttribute('data-user', userId);
             item.classList.add(...classes);
@@ -812,14 +826,15 @@
             // Handle platform display
             const platformElement = clone.querySelector('.platform');
             // Remove platform logo to avoid big TikTok logo
-            platformElement.remove();
+            if (platformElement) platformElement.remove();
 
             // Add timestamp if enabled
             if (CONFIG.showTimestamps) {
                 const timestampElement = clone.querySelector('.timestamp');
-                timestampElement.textContent = whatTimeIsIt();
+                if (timestampElement) timestampElement.textContent = whatTimeIsIt();
             } else {
-                clone.querySelector('.timestamp').remove();
+                const timestampElement = clone.querySelector('.timestamp');
+                if (timestampElement) timestampElement.remove();
             }
 
             chatContainer.prepend(item);
@@ -829,13 +844,18 @@
 
         function addEventItem(platform, clone, classes, userId, messageId) {
             const item = clone.querySelector('.event');
+            if (!item) {
+                console.error('[Chat Overlay] Could not find .event element in template');
+                return;
+            }
+            
             item.id = messageId;
             item.setAttribute('data-user', userId);
             item.classList.add(...classes);
 
             const platformElement = clone.querySelector('.platform');
             // Remove platform logo to avoid big TikTok logo
-            platformElement.remove();
+            if (platformElement) platformElement.remove();
 
             chatContainer.prepend(item);
             removeExtraChatMessages();
