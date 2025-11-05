@@ -94,7 +94,7 @@
             line-height: 150%;
             text-shadow: 2px 2px 5px rgba(0,0,0,0.75);
             transition: all ease-in-out 300ms;
-            margin: 5px 0;
+            margin: 2px 0;
         }
 
         #chat .item .message {
@@ -305,9 +305,8 @@
         }
 
         #chat .event.tiktok.gift .value span.gift-image img {
-            width: 32px;
-            height: 32px;
-            object-fit: contain;
+            width: 48px;
+            height: auto;
             filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.5));
         }
 
@@ -323,9 +322,8 @@
         }
 
         #chat .event.tiktok.gift .value span.gift-value img {
-            width: 20px;
-            height: 20px;
-            transform: translateY(-2px);
+            width: 16px;
+            transform: translateY(2px);
         }
 
         #chat .event.tiktok.gift .info {
@@ -399,7 +397,6 @@
             }
         }
 
-
         /* Responsive design */
         @media (max-width: 768px) {
             #chat {
@@ -464,7 +461,7 @@
             showAvatars: true,
             showBadges: true,
             showTimestamps: true,
-            oneLine: false,
+            showPlatform: false,
             chatThreshold: 50,
             hideAfter: 0,
             fontSize: 18,
@@ -495,177 +492,28 @@
         
         console.log('[Chat Overlay] WebSocket URL:', CONFIG.tikfinityWebSocketURL);
 
-        // Global variables with performance optimization
+        // Global variables
         const chatContainer = document.querySelector('#chat');
         const chatTemplate = document.querySelector('#chat-message');
         const eventTemplate = document.querySelector('#event-message');
         const userColors = new Map();
         const tiktokAvatars = new Map();
-        
-        // Performance monitoring
-        let messageCount = 0;
-        let lastPerformanceCheck = Date.now();
-        
+        const processedMessageIds = new Set(); // Track processed messages to prevent duplicates
 
         // Initialize user colors map for TikTok
         userColors.set('tiktok', new Map());
 
         let tikfinityWebSocket = null;
         let retryCount = 0;
-
-        /* =============================================================================
-         * Settings Management
-         * ============================================================================= */
         
-        function loadSettingsFromStorage() {
-            try {
-                const saved = localStorage.getItem('chat_overlay_config');
-                if (saved) {
-                    const config = JSON.parse(saved);
-                    console.log('Loaded settings from storage:', config);
-                    Object.assign(CONFIG, config);
-                    applySettings();
-                }
-            } catch (e) {
-                console.error('Failed to load settings from storage:', e);
+        // Clean up old message IDs periodically to prevent memory leak (keep last 1000)
+        setInterval(() => {
+            if (processedMessageIds.size > 1000) {
+                const idsArray = Array.from(processedMessageIds);
+                const toRemove = idsArray.slice(0, idsArray.length - 1000);
+                toRemove.forEach(id => processedMessageIds.delete(id));
             }
-        }
-
-        function loadTempSettingsFromStorage() {
-            try {
-                const tempSaved = localStorage.getItem('chat_overlay_temp_config');
-                if (tempSaved) {
-                    const tempConfig = JSON.parse(tempSaved);
-                    console.log('Loaded temp settings from storage:', tempConfig);
-                    
-                    // Apply settings directly
-                    Object.keys(tempConfig).forEach(key => {
-                        CONFIG[key] = tempConfig[key];
-                    });
-                    
-                    console.log('CONFIG updated from storage:', CONFIG);
-                    applySettings();
-                }
-            } catch (e) {
-                console.error('Failed to load temp settings from storage:', e);
-            }
-        }
-
-        function applySettings() {
-            // Apply font settings efficiently
-            document.documentElement.style.setProperty('--font-size', CONFIG.fontSize + 'px');
-            document.documentElement.style.setProperty('--font-family', CONFIG.fontFamily);
-            document.documentElement.style.setProperty('--message-opacity', CONFIG.messageOpacity / 100);
-            
-            // Apply background with opacity (cached calculation)
-            let bgColor = CONFIG.backgroundColor;
-            if (bgColor === 'transparent') {
-                bgColor = `rgba(0, 0, 0, ${CONFIG.backgroundOpacity / 100})`;
-            } else {
-                // Convert hex to rgba with opacity
-                const hex = bgColor.replace('#', '');
-                const r = parseInt(hex.substr(0, 2), 16);
-                const g = parseInt(hex.substr(2, 2), 16);
-                const b = parseInt(hex.substr(4, 2), 16);
-                bgColor = `rgba(${r}, ${g}, ${b}, ${CONFIG.backgroundOpacity / 100})`;
-            }
-            
-            // Batch DOM updates for better performance
-            const elements = [
-                document.body,
-                document.querySelector('#container'),
-                document.querySelector('#container .wrapper'),
-                document.querySelector('#chat')
-            ];
-            
-            elements.forEach(el => {
-                if (el) el.style.backgroundColor = bgColor;
-            });
-            
-            // Update CSS for dynamic settings
-            const style = document.createElement('style');
-            style.id = 'dynamic-settings';
-            style.textContent = `
-                #chat {
-                    font-size: var(--font-size, 18px);
-                    font-family: var(--font-family, 'DM Sans'), sans-serif;
-                }
-                
-                #chat .item,
-                #chat .event {
-                    opacity: var(--message-opacity, 1);
-                }
-                
-                #chat .timestamp {
-                    display: ${CONFIG.showTimestamps ? 'inline' : 'none'};
-                }
-                
-                #chat .avatar {
-                    display: ${CONFIG.showAvatars ? 'inline-block' : 'none'};
-                }
-                
-                #chat .badges {
-                    display: ${CONFIG.showBadges ? 'inline' : 'none'};
-                }
-                
-                
-                #chat .item .message {
-                    display: ${CONFIG.oneLine ? 'flex' : 'block'};
-                    align-items: ${CONFIG.oneLine ? 'center' : 'stretch'};
-                    gap: ${CONFIG.oneLine ? '5px' : '0'};
-                    white-space: ${CONFIG.oneLine ? 'nowrap' : 'normal'};
-                }
-                
-                #chat .event .message {
-                    display: ${CONFIG.oneLine ? 'flex' : 'block'};
-                    align-items: ${CONFIG.oneLine ? 'center' : 'stretch'};
-                    gap: ${CONFIG.oneLine ? '5px' : '0'};
-                    white-space: ${CONFIG.oneLine ? 'nowrap' : 'normal'};
-                }
-                
-                #chat .item .info {
-                    display: ${CONFIG.oneLine ? 'flex' : 'block'};
-                    align-items: ${CONFIG.oneLine ? 'center' : 'stretch'};
-                    gap: ${CONFIG.oneLine ? '5px' : '0'};
-                    flex-wrap: ${CONFIG.oneLine ? 'nowrap' : 'wrap'};
-                    white-space: ${CONFIG.oneLine ? 'nowrap' : 'normal'};
-                }
-                
-                #chat .event .info {
-                    display: ${CONFIG.oneLine ? 'flex' : 'block'};
-                    align-items: ${CONFIG.oneLine ? 'center' : 'stretch'};
-                    gap: ${CONFIG.oneLine ? '5px' : '0'};
-                    flex-wrap: ${CONFIG.oneLine ? 'nowrap' : 'wrap'};
-                    white-space: ${CONFIG.oneLine ? 'nowrap' : 'normal'};
-                }
-            `;
-            
-            // Remove old dynamic settings
-            const oldStyle = document.getElementById('dynamic-settings');
-            if (oldStyle) {
-                oldStyle.remove();
-            }
-            
-            // Add new dynamic settings
-            document.head.appendChild(style);
-        }
-
-        function updateSettings(newSettings) {
-            console.log('=== SETTINGS UPDATE DEBUG ===');
-            console.log('Received new settings:', newSettings);
-            console.log('Current CONFIG before update:', CONFIG);
-            
-            // Apply settings directly
-            Object.keys(newSettings).forEach(key => {
-                CONFIG[key] = newSettings[key];
-            });
-            
-            console.log('CONFIG after direct update:', CONFIG);
-            applySettings();
-            console.log('Settings applied successfully');
-            console.log('=== END SETTINGS UPDATE DEBUG ===');
-        }
-
+        }, 60000); // Clean every minute
 
         /* =============================================================================
          * Utility Functions
@@ -708,170 +556,201 @@
          * ============================================================================= */
 
         async function tiktokChatMessage(data) {
+            // Create unique message ID for deduplication
+            const messageId = data.msgId || data.msg_id || `${data.userId || data.uniqueId || 'unknown'}_${data.comment || ''}_${data.timestamp || Date.now()}`;
+            
+            // Check if message was already processed
+            if (processedMessageIds.has(messageId)) {
+                console.log('[Chat Overlay] Duplicate message detected, skipping:', messageId);
+                return;
+            }
+            
+            // Mark message as processed
+            processedMessageIds.add(messageId);
+            
             if (!data?.comment) { 
                 data.comment = " "; 
             }
 
             const template = chatTemplate;
             const clone = template.content.cloneNode(true);
-            const messageId = data.msgId;
-            const userId = data.userId;
+            // messageId is already declared above for deduplication
+            const userId = data.userId || data.uniqueId;
 
-            const elements = [...clone.querySelectorAll('[class]')];
-            const elementMap = Object.fromEntries(
-                elements.map(el => [el.className, el])
+            const {
+                'first-message': firstMessage,
+                'shared-chat': sharedChat,
+                header,
+                timestamp,
+                platform,
+                badges,
+                avatar,
+                pronouns: pronoun,
+                user,
+                reply,
+                'actual-message': message
+            } = Object.fromEntries(
+                [...clone.querySelectorAll('[class]')]
+                    .map(el => [el.className, el])
             );
-
-            const firstMessage = elementMap['first-message'];
-            const sharedChat = elementMap['shared-chat'];
-            const header = elementMap.header;
-            const timestamp = elementMap.timestamp;
-            const platform = elementMap.platform;
-            const badges = elementMap.badges;
-            const avatar = elementMap.avatar;
-            const pronoun = elementMap.pronouns;
-            const user = elementMap.user;
-            const reply = elementMap.reply;
-            const message = elementMap['actual-message'];
 
             const classes = ['tiktok', 'chat'];
 
             if (data.isModerator) classes.push('mod');
             if (data.isSubscriber) classes.push('sub');
 
-            if (header) header.remove();
-            if (firstMessage) firstMessage.remove();
-            if (sharedChat) sharedChat.remove();
-            if (reply) reply.remove();
-            if (pronoun) pronoun.remove();
+            header.remove();
+            firstMessage.remove();
+            sharedChat.remove();
+            reply.remove();
+            pronoun.remove();
 
-            if (CONFIG.showAvatars && avatar) avatar.innerHTML = `<img src="${await getTikTokAvatar(data)}">`; 
-            else if (avatar) avatar.remove();
+            if (CONFIG.showAvatars) avatar.innerHTML = `<img src="${await getTikTokAvatar(data)}">`; 
+            else avatar.remove();
             
-            if (CONFIG.showBadges && badges) {
+            if (CONFIG.showBadges) {
                 const badgesHTML = await getTikTokBadges(data);
                 if (!badgesHTML) { 
                     badges.remove(); 
                 } else { 
                     badges.innerHTML = badgesHTML; 
                 }
-            } else if (badges) { 
+            } else { 
                 badges.remove(); 
             }
 
             const color = createRandomColor(data.uniqueId);
-            if (user) {
-                user.style.color = color;
-                user.textContent = data.nickname;
-            }
+            user.style.color = color;
+            user.textContent = data.nickname;
             
-            if (message) {
-                message.textContent = data.comment;
-                await getTikTokEmotes(data, message);
-            }
+            message.textContent = data.comment;
+            await getTikTokEmotes(data, message);
 
             addMessageItem('tiktok', clone, classes, userId, messageId);
         }
 
-
-        async function tiktokGiftMessage(data) {
-            // Check if gifts should be shown
-            if (!CONFIG.showGifts) {
-                console.log('Gifts are disabled, skipping gift message');
+        async function tiktokFollowMessage(data) {
+            // Create unique message ID for deduplication
+            const messageId = data.msgId || data.msg_id || `follow_${data.userId || data.uniqueId || 'unknown'}_${data.timestamp || Date.now()}`;
+            
+            // Check if message was already processed
+            if (processedMessageIds.has(messageId)) {
+                console.log('[Chat Overlay] Duplicate follow message detected, skipping:', messageId);
                 return;
             }
             
-            console.log('Gift message data:', data);
-            console.log('Gift image URL:', data.giftPictureUrl || data.giftImage);
-            console.log('Gift name:', data.giftName);
-            console.log('Coin amount:', data.coins || data.diamondCount || data.gift?.diamondCount || data.coinCount);
+            // Mark message as processed
+            processedMessageIds.add(messageId);
             
             const template = eventTemplate;
             const clone = template.content.cloneNode(true);
-            const messageId = data.msgId || data.msg_id || Date.now().toString();
-            // Use nickname as the primary identifier for stacking since it's more consistent
-            const userId = data.nickname || data.uniqueId || data.userId || 'unknown';
+            const userId = data.userId || data.uniqueId;
 
-            const elements = [...clone.querySelectorAll('[class]')];
-            const elementMap = Object.fromEntries(
-                elements.map(el => [el.className, el])
+            const {
+                header,
+                platform,
+                user,
+                action,
+                value,
+                'actual-message': message
+            } = Object.fromEntries(
+                [...clone.querySelectorAll('[class]')]
+                    .map(el => [el.className, el])
             );
 
-            const header = elementMap.header;
-            const platform = elementMap.platform;
-            const user = elementMap.user;
-            const action = elementMap.action;
-            const value = elementMap.value;
-            const message = elementMap['actual-message'];
+            const classes = ['tiktok', 'follow'];
+
+            header.remove();
+            
+            user.textContent = data.nickname;
+            action.innerHTML = ` followed you`;
+            value.innerHTML = `👋`;
+
+            message.remove();
+
+            addEventItem('tiktok', clone, classes, userId, messageId);
+        }
+
+        async function tiktokGiftMessage(data) {
+            // Create unique message ID for deduplication (combine msgId with repeatCount if available)
+            const messageId = data.msgId || data.msg_id || `gift_${data.userId || data.uniqueId || 'unknown'}_${data.giftId || data.giftName || 'gift'}_${data.repeatCount || 1}_${data.timestamp || Date.now()}`;
+            
+            // Check if message was already processed
+            if (processedMessageIds.has(messageId)) {
+                console.log('[Chat Overlay] Duplicate gift message detected, skipping:', messageId);
+                return;
+            }
+            
+            // Mark message as processed
+            processedMessageIds.add(messageId);
+            
+            const template = eventTemplate;
+            const clone = template.content.cloneNode(true);
+            const userId = data.userId || data.uniqueId || data.nickname;
+
+            const {
+                header,
+                platform,
+                user,
+                action,
+                value,
+                'actual-message': message
+            } = Object.fromEntries(
+                [...clone.querySelectorAll('[class]')]
+                    .map(el => [el.className, el])
+            );
 
             const classes = ['tiktok', 'gift'];
 
-            if (header) header.remove();
+            header.remove();
             
-            if (user) {
-                user.textContent = data.nickname || data.uniqueId || 'Viewer';
-            }
-            if (action) action.innerHTML = ` gifted you `;
+            user.textContent = data.nickname || data.uniqueId || 'Viewer';
+            action.innerHTML = ` gifted you `;
             
             // Use gift image from data, with fallback to availableGifts
-            const giftImage = data.giftPictureUrl || data.giftImage || await getGiftImageFromName(data.giftName);
+            const giftImage = data.giftImage || await getGiftImageFromName(data.giftName);
             const giftName = data.giftName || 'Gift';
             const repeatCount = data.repeatCount || data.repetition || 1;
             
-            // Get coin amount from various possible fields
-            const coinAmount = data.coins || data.diamondCount || data.gift?.diamondCount || data.coinCount || 0;
-            
-            // Calculate total coins and determine animation class
-            const totalCoins = Math.floor(repeatCount * coinAmount);
-            const tikTokGiftMatch = tiktokGiftsClasses.find(lv => totalCoins >= lv.min && totalCoins <= lv.max);
-            if (tikTokGiftMatch) {
-                classes.push(tikTokGiftMatch.class);
-            }
-            
-            if (value) value.innerHTML = `
-                <div class="gift-info">
-                    <span class="gift-image">
-                        <img src="${giftImage}" alt="${giftName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                        <span style="display:none; font-size: 24px;">🎁</span>
-                    </span>
-                    <span class="gift-value">
-                        <img src="data:image/svg+xml;base64,PHN2ZyBmb250LXNpemU9IjMwcHgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0iY3VycmVudENvbG9yIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIj48ZyBjbGlwLXBhdGg9InVybCgjSWNvbl9Db2xvci1UaWt0b2tfQ29pbl9zdmdfX2EpIj48cGF0aCBkPSJNNDggMjRhMjQgMjQgMCAxIDEtNDggMCAyNCAyNCAwIDAgMSA0OCAwWiIgZmlsbD0iI0ZGRDg0RCIvPjxwYXRoIGQ9Ik00NyAyNGEyMyAyMyAwIDEgMS00NiAwIDIzIDIzIDAgMCAxIDQ2IDBaIiBmaWxsPSIjRkZERTU1Ii8+PHBhdGggZD0iTTQyIDI0YTE4IDE4IDAgMSAxLTM2IDAgMTggMTggMCAwIDEgMzYgMFoiIGZpbGw9IiNGN0EzMDAiLz48cGF0aCBkPSJNNDIgMjRhMTggMTggMCAxIDEtMzYgMCAxOCAxOCAwIDAgMSAzNiAwWiIgZmlsbD0iI0Y3QTgwRiIvPjxwYXRoIGQ9Ik00MS45NCAyNS41YTE4IDE4IDAgMSAwLTM1Ljg4IDAgMTggMTggMCAwIDEgMzUuODggMFoiIGZpbGw9IiNFOEIwMDAiLz48cGF0aCBkPSJNNDEuOTQgMjUuNWExOCAxOCAwIDEgMC0zNS44OCAwIDE4IDE4IDAgMCAxIDM1Ljg4IDBaIiBmaWxsPSIjRjA5MjA3Ii8+PHBhdGggZD0iTTM0Ljc0IDE3Ljc3djUuODZjLTIuMDYgMC00LjA1LS40NC01LjgxLTEuNTV2Ny4yYTcuNzkgNy43OSAwIDAgMS03Ljg0IDcuNzUgNy43OSA3Ljc5IDAgMCAxLTcuOC04LjM1IDcuNzkgNy43OSAwIDAgMSA5LjE5LTguMjR2NmMtLjQ3LS4xMy0uOS0uMjYtMS4zOS0uMjZhMy4xNCAzLjE0IDAgMCAwLTMuMDkgMi41IDMuMTQgMy4xNCAwIDAgMCAzLjEgMi41YzEuNzQgMCAzLjE0LTEuNCAzLjE0LTMuMTFWMTIuMDNoNC42OWE1LjYgNS42IDAgMCAwIDUuODEgNS43NFoiIGZpbGw9IiNGMDkyMDciLz48cGF0aCBkPSJNMzQuMzQgMTguMThhNS43OCA1Ljc4IDAgMCAxLTUuODItNS43NGgtMy44N3YxNS42M2MwIDEuOTQtMS42IDMuNS0zLjU2IDMuNWEzLjUzIDMuNTMgMCAwIDEtMy41NS0zLjUgMy41MyAzLjUzIDAgMCAxIDQuNTItMy4zOHYtMy45YTcuMzggNy4zOCAwIDAgMC04LjQgNy4yOCA3LjM4IDcuMzggMCAwIDAgNy40MyA3LjM0YzQuMSAwIDcuNDMtMy4yOSA3LjQzLTcuMzR2LTcuOThhOS43MyA5LjczIDAgMCAwIDUuODIgMS45MnYtMy44M1oiIGZpbGw9IiNmZmYiLz48L2c+PGRlZnM+PGNsaXBQYXRoIGlkPSJJY29uX0NvbG9yLVRpa3Rva19Db2luX3N2Z19fYSI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGg0OHY0OEgweiIvPjwvY2xpcFBhdGg+PC9kZWZzPjwvc3ZnPg==" alt="coins" style="width: 20px; height: 20px; vertical-align: middle;">
-                        <span style="margin-left: 4px;">${coinAmount > 0 ? coinAmount : ''}</span>
-                    </span>
-                </div>
-            `;
+            value.innerHTML = `<span class="gift-info">
+                <span class="gift-image">
+                    <img src="${giftImage}" alt="${giftName}" onerror="this.src='https://via.placeholder.com/48x48/666/fff?text=🎁'">
+                </span>
+                <span class="gift-value">
+                    ${repeatCount} <img src="https://p16-webcast.tiktokcdn.com/img/alisg/webcast-sg/resource/de31974d7a94525c6f31872b5b38f76e.png~tplv-obj.webp" alt="coins" style="width: 16px; height: 16px;">
+                </span>
+            </span>`;
 
-            if (message) message.remove();
+            message.remove();
 
-            // Check if we should stack this gift or create a new message
-            const existingStack = giftStacks.get(userId);
-            
-            if (existingStack) {
-                // Update existing stack instead of creating new message
-                console.log('Updating existing gift stack for user:', userId);
-                updateGiftStack(userId, data, null); // Pass null since we're not creating new element
-            } else {
-                // Create new message and start stacking (always create stack, even for single gifts)
-                console.log('Creating new gift message for user:', userId, 'with stacking');
-                const element = addEventItem('tiktok', clone, classes, userId, messageId);
-                updateGiftStack(userId, data, element);
-            }
+            addEventItem('tiktok', clone, classes, userId, messageId);
         }
-
 
         /* =============================================================================
          * Helper Functions
          * ============================================================================= */
 
-        function whatTimeIsIt() {
-            const now = new Date();
-            return now.toLocaleTimeString('en-GB', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        }
+        // Gift lookup from TikHub's availableGifts
+        const availableGifts = [
+            { id: "13651", name: "Go Popular", image: "https://p16-webcast.tiktokcdn.com/img/alisg/webcast-sg/resource/b342e28d73dac6547e0b3e2ad57f6597.png~tplv-obj.webp", coins: 1 },
+            { id: "9427", name: "Pegasus", image: "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/f600a2495ab5d250e7da2066484a9383.png~tplv-obj.webp", coins: 42999 },
+            { id: "9092", name: "Fire Phoenix", image: "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/bfb8425a7e8fa03f9fec05a973a4a506.png~tplv-obj.webp", coins: 41999 },
+            { id: "8651", name: "Thunder Falcon", image: "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/26f3fbcda383e6093a19b8e7351a164c~tplv-obj.webp", coins: 39999 },
+            { id: "7312", name: "TikTok Universe+", image: "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/b13105782e8bf8fbefaa83b7af413cee~tplv-obj.webp", coins: 34999 },
+            { id: "14661", name: "Infinite Heart", image: "https://p16-webcast.tiktokcdn.com/img/alisg/webcast-sg/resource/de31974d7a94525c6f31872b5b38f76e.png~tplv-obj.webp", coins: 23999 },
+            { id: "7125", name: "Premium Shuttle", image: "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/c2b287adee5151b7889d6e3d45b72e44~tplv-obj.webp", coins: 20000 }
+        ];
 
+        async function getGiftImageFromName(giftName) {
+            if (!giftName) return 'https://via.placeholder.com/48x48/666/fff?text=🎁';
+            
+            const gift = availableGifts.find(g => 
+                g.name.toLowerCase() === giftName.toLowerCase() ||
+                g.id === giftName
+            );
+            
+            return gift ? gift.image : 'https://via.placeholder.com/48x48/666/fff?text=🎁';
+        }
 
         async function getTikTokAvatar(data) {
             if (tiktokAvatars.has(data.uniqueId)) {
@@ -930,16 +809,17 @@
             item.setAttribute('data-user', userId);
             item.classList.add(...classes);
 
-            // Handle platform display (remove platform logo)
+            // Handle platform display
             const platformElement = clone.querySelector('.platform');
-            if (platformElement) platformElement.remove();
+            // Remove platform logo to avoid big TikTok logo
+            platformElement.remove();
 
-            // Handle timestamp efficiently
-            const timestampElement = clone.querySelector('.timestamp');
-            if (CONFIG.showTimestamps && timestampElement) {
+            // Add timestamp if enabled
+            if (CONFIG.showTimestamps) {
+                const timestampElement = clone.querySelector('.timestamp');
                 timestampElement.textContent = whatTimeIsIt();
-            } else if (timestampElement) {
-                timestampElement.remove();
+            } else {
+                clone.querySelector('.timestamp').remove();
             }
 
             chatContainer.prepend(item);
@@ -955,13 +835,11 @@
 
             const platformElement = clone.querySelector('.platform');
             // Remove platform logo to avoid big TikTok logo
-            if (platformElement) platformElement.remove();
+            platformElement.remove();
 
             chatContainer.prepend(item);
             removeExtraChatMessages();
             scheduleMessageRemoval(item);
-            
-            return item; // Return the element for gift stacking
         }
 
         function removeExtraChatMessages() {
@@ -1006,55 +884,66 @@
                 tikfinityWebSocket.onmessage = async (event) => {
                     try {
                         const data = JSON.parse(event.data);
+                        let processed = false; // Track if message was processed to prevent duplicate handling
                         
-                        // Handle TikHub event format (matching other overlays)
-                        if (data.type === 'tiktok-event' && data.event) {
-                            const eventData = data.event;
-                            const eventType = eventData.type;
+                        // Handle TikHub event format (wrapped format)
+                        if (data.type === 'tiktok-event' && data.payload) {
+                            const eventData = data.payload;
                             
-                            if (eventType === 'chat' || eventType === 'comment') {
+                            if (eventData.type === 'chat') {
                                 await tiktokChatMessage(eventData);
+                                processed = true;
+                            } else if (eventData.type === 'follow') {
+                                await tiktokFollowMessage(eventData);
+                                processed = true;
+                            } else if (eventData.type === 'gift') {
+                                // Handle TikHub gift data format
+                                const giftData = {
+                                    msgId: eventData.msgId || eventData.msg_id,
+                                    userId: eventData.userId || eventData.uniqueId,
+                                    nickname: eventData.nickname || eventData.username,
+                                    uniqueId: eventData.uniqueId || eventData.userId,
+                                    giftName: eventData.giftName || eventData.gift?.name || eventData.name,
+                                    giftImage: eventData.giftImage || eventData.gift?.image,
+                                    repeatCount: eventData.repeatCount || eventData.repetition || 1,
+                                    coins: eventData.coins || eventData.diamondCount || eventData.gift?.diamondCount || 0,
+                                    profilePictureUrl: eventData.profilePictureUrl || eventData.profileImage,
+                                    avatarLarger: eventData.avatarLarger,
+                                    userBadges: eventData.userBadges || [],
+                                    topGifterRank: eventData.topGifterRank,
+                                    giftId: eventData.giftId || eventData.gift?.id,
+                                    timestamp: eventData.timestamp || Date.now()
+                                };
+                                await tiktokGiftMessage(giftData);
+                                processed = true;
                             }
-                            // Silently ignore non-chat events
                         }
-                        // Also handle direct TikTok events (fallback) - only chat
-                        else if (data.type === 'chat' || data.event === 'chat') {
-                            await tiktokChatMessage(data);
-                        }
-                        // Handle ANY TikTok event that might contain chat data
-                        else if (data.msgId || data.comment || data.nickname || data.uniqueId) {
-                            // Try to process as chat message if it has chat-like properties
-                            if (data.comment || data.msgId) {
+                        
+                        // Handle direct TikTok events (only if not already processed)
+                        if (!processed) {
+                            if (data.type === 'chat' || data.event === 'chat') {
                                 await tiktokChatMessage(data);
-                            }
-                        }
-                        // Handle settings updates from TikHub
-                        else if (data.type === 'chat-overlay-settings-update' && data.settings) {
-                            // Apply settings directly
-                            Object.keys(data.settings).forEach(key => {
-                                CONFIG[key] = data.settings[key];
-                            });
-                            
-                            applySettings();
-                        }
-                        // Handle overlay toggle from TikHub
-                        else if (data.type === 'chat-overlay-toggle' || data.type === 'overlay-toggle') {
-                            console.log('=== WEBSOCKET TOGGLE RECEIVED ===');
-                            console.log('Overlay enabled:', data.enabled);
-                            
-                            // Show/hide the overlay
-                            if (data.enabled) {
-                                document.body.style.display = 'block';
-                                console.log('Chat overlay enabled via WebSocket');
-                            } else {
-                                document.body.style.display = 'none';
-                                console.log('Chat overlay disabled via WebSocket');
-                            }
-                        }
-                        // Handle payload-based chat data
-                        else if (data.payload && typeof data.payload === 'object') {
-                            if (data.payload.comment || data.payload.msgId || data.payload.nickname) {
-                                await tiktokChatMessage(data.payload);
+                            } else if (data.type === 'follow' || data.event === 'follow') {
+                                await tiktokFollowMessage(data);
+                            } else if (data.type === 'gift' || data.event === 'gift') {
+                                // Handle TikHub gift data format
+                                const giftData = {
+                                    msgId: data.msgId || data.msg_id,
+                                    userId: data.userId || data.uniqueId,
+                                    nickname: data.nickname || data.username,
+                                    uniqueId: data.uniqueId || data.userId,
+                                    giftName: data.giftName || data.gift?.name || data.name,
+                                    giftImage: data.giftImage || data.gift?.image,
+                                    repeatCount: data.repeatCount || data.repetition || 1,
+                                    coins: data.coins || data.diamondCount || data.gift?.diamondCount || 0,
+                                    profilePictureUrl: data.profilePictureUrl || data.profileImage,
+                                    avatarLarger: data.avatarLarger,
+                                    userBadges: data.userBadges || [],
+                                    topGifterRank: data.topGifterRank,
+                                    giftId: data.giftId || data.gift?.id,
+                                    timestamp: data.timestamp || Date.now()
+                                };
+                                await tiktokGiftMessage(giftData);
                             }
                         }
                     } catch (error) {
@@ -1086,158 +975,16 @@
          * Initialize
          * ============================================================================= */
 
-
         document.addEventListener('DOMContentLoaded', () => {
             console.log('TikTok Chat Overlay: Initializing...');
-            console.log('=== OVERLAY INITIALIZATION DEBUG ===');
-            console.log('Window location:', window.location.href);
-            console.log('Window name:', window.name);
-            console.log('Window opener:', !!window.opener);
-            console.log('Window parent:', window.parent === window);
-            console.log('=== END INITIALIZATION DEBUG ===');
-            
-            // Load settings from localStorage on startup
-            loadSettingsFromStorage();
-            
-            
-            
             connectTikTok();
 
-            // Show preview messages if in iframe (for TikHub app preview)
-            function showPreviewMessages() {
-                if (window.self !== window.top) {
-                    console.log('[Chat Overlay] Loading in iframe - showing preview messages');
-                    
-                    // Use simple avatar (will show initials when no URL is provided)
-                    const defaultAvatar = 'https://ui-avatars.com/api/?name=TikHub&background=7fff7f&color=1a1d23&size=128';
-                    
-                    // Sample chat messages with variety
-                    const previewMessages = [
-                        {
-                            uniqueId: 'CoolViewer123',
-                            nickname: 'CoolViewer123',
-                            comment: 'Hello! This is amazing! 🔥',
-                            profilePictureUrl: 'https://ui-avatars.com/api/?name=CV&background=ff6b6b&color=fff&size=128',
-                            badges: [{ type: 'subscriber', name: 'VIP' }],
-                            timestamp: Date.now() - 240000
-                        },
-                        {
-                            uniqueId: 'TopGifter',
-                            nickname: 'TopGifter',
-                            comment: 'Great stream! Love the content! 🎉',
-                            profilePictureUrl: 'https://ui-avatars.com/api/?name=TG&background=667eea&color=fff&size=128',
-                            badges: [],
-                            timestamp: Date.now() - 180000
-                        },
-                        {
-                            uniqueId: 'AwesomeSub',
-                            nickname: 'AwesomeSub',
-                            comment: 'This is so entertaining! Keep it up! 👏',
-                            profilePictureUrl: 'https://ui-avatars.com/api/?name=AS&background=f093fb&color=fff&size=128',
-                            badges: [{ type: 'subscriber', name: 'Subscriber' }],
-                            timestamp: Date.now() - 120000
-                        },
-                        {
-                            uniqueId: 'ViewerFan',
-                            nickname: 'ViewerFan',
-                            comment: 'First time watching, this is amazing! 💯',
-                            profilePictureUrl: 'https://ui-avatars.com/api/?name=VF&background=4facfe&color=fff&size=128',
-                            badges: [],
-                            timestamp: Date.now() - 60000
-                        },
-                        {
-                            uniqueId: 'ChatSupporter',
-                            nickname: 'ChatSupporter',
-                            comment: "Can't wait for the next stream! ⭐",
-                            profilePictureUrl: 'https://ui-avatars.com/api/?name=CS&background=43e97b&color=fff&size=128',
-                            badges: [{ type: 'moderator', name: 'Moderator' }],
-                            timestamp: Date.now()
-                        }
-                    ];
-                    
-                    // Add messages with a slight delay for smooth appearance
-                    previewMessages.forEach((msg, index) => {
-                        setTimeout(() => {
-                            tiktokChatMessage(msg);
-                        }, index * 300);
-                    });
-                }
-            }
-            
-            // Show preview after a short delay to ensure DOM is ready
-            setTimeout(showPreviewMessages, 500);
-
-            // Note: We're not using postMessage anymore since the real browser overlay
-            // is in a separate window. We use localStorage polling instead.
-
-            // Listen for postMessage from TikHub (primary method)
+            // Listen for settings updates
             window.addEventListener('message', (event) => {
-                if (event.data && event.data.type === 'chat-overlay-settings-update') {
-                    console.log('=== POSTMESSAGE RECEIVED FROM TIKHUB ===');
-                    console.log('Received settings:', event.data.settings);
-                    
-                    // Apply settings directly
-                    Object.keys(event.data.settings).forEach(key => {
-                        CONFIG[key] = event.data.settings[key];
-                    });
-                    
-                    console.log('CONFIG updated via postMessage:', CONFIG);
-                    applySettings();
-                } else if (event.data && event.data.type === 'chat') {
-                    // Handle test chat messages from TikHub app
-                    console.log('[Chat Overlay] Received test chat message:', event.data.data);
-                    tiktokChatMessage(event.data.data);
-                } else if (event.data && (event.data.type === 'overlay-toggle' || event.data.type === 'chat-overlay-toggle')) {
-                    console.log('=== OVERLAY TOGGLE RECEIVED ===');
-                    console.log('Overlay enabled:', event.data.enabled);
-                    
-                    // Show/hide the overlay
-                    if (event.data.enabled) {
-                        document.body.style.display = 'block';
-                        console.log('Chat overlay enabled');
-                    } else {
-                        document.body.style.display = 'none';
-                        console.log('Chat overlay disabled');
-                    }
+                if (event.data.type === 'settings-update') {
+                    Object.assign(CONFIG, event.data.settings);
                 }
             });
-
-            // Listen for localStorage changes (backup method for real-time updates)
-            window.addEventListener('storage', (event) => {
-                if (event.key === 'chat_overlay_temp_config') {
-                    console.log('Storage change detected, loading temp settings');
-                    loadTempSettingsFromStorage();
-                } else if (event.key === 'chat_overlay_config') {
-                    console.log('Storage change detected, loading saved settings');
-                    loadSettingsFromStorage();
-                }
-            });
-
-            // Optimized localStorage polling (reduced frequency and redundant checks)
-            let lastConfigHash = '';
-            setInterval(() => {
-                try {
-                    const tempSaved = localStorage.getItem('chat_overlay_temp_config');
-                    if (tempSaved) {
-                        const tempConfig = JSON.parse(tempSaved);
-                        const configHash = JSON.stringify(tempConfig);
-                        
-                        // Only update if settings actually changed (hash comparison)
-                        if (configHash !== lastConfigHash) {
-                            lastConfigHash = configHash;
-                            
-                            // Apply settings directly
-                            Object.keys(tempConfig).forEach(key => {
-                                CONFIG[key] = tempConfig[key];
-                            });
-                            
-                            applySettings();
-                        }
-                    }
-                } catch (e) {
-                    // Ignore errors silently
-                }
-            }, 1000); // Reduced frequency to 1 second
         });
     </script>
 </body>
