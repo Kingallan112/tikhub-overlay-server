@@ -472,10 +472,28 @@
             messageOpacity: 100,
             backgroundColor: 'transparent',
             backgroundOpacity: 0,
-            tikfinityWebSocketURL: 'wss://tikhub-overlay-server.onrender.com/ws/chat',
+            tikfinityWebSocketURL: (() => {
+                // Auto-detect WebSocket URL based on current location
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                   window.location.hostname === '127.0.0.1' ||
+                                   window.location.hostname === '';
+                
+                if (isLocalhost) {
+                    // Local development - use localhost
+                    return 'ws://localhost:3000/ws/chat';
+                } else {
+                    // Deployed overlay - use current hostname with appropriate protocol
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const hostname = window.location.hostname;
+                    const port = window.location.port ? `:${window.location.port}` : '';
+                    return `${protocol}//${hostname}${port}/ws/chat`;
+                }
+            })(),
             reconnectDelay: 10000,
             maxTries: 20
         };
+        
+        console.log('[Chat Overlay] WebSocket URL:', CONFIG.tikfinityWebSocketURL);
 
         // Global variables with performance optimization
         const chatContainer = document.querySelector('#chat');
@@ -696,8 +714,7 @@
 
             const template = chatTemplate;
             const clone = template.content.cloneNode(true);
-            // Generate a unique messageId if missing (using msgId, timestamp, userId, and comment hash)
-            const messageId = data.msgId || `chat_${Date.now()}_${data.userId || data.uniqueId || 'unknown'}_${data.comment.substring(0, 20).replace(/\s/g, '')}`;
+            const messageId = data.msgId;
             const userId = data.userId;
 
             const elements = [...clone.querySelectorAll('[class]')];
@@ -908,12 +925,6 @@
         }
 
         function addMessageItem(platform, clone, classes, userId, messageId) {
-            // Check if message with this ID already exists to prevent duplicates
-            if (messageId && document.getElementById(messageId)) {
-                console.log('[Chat Overlay] Duplicate message detected, skipping:', messageId);
-                return;
-            }
-
             const item = clone.querySelector('.item');
             item.id = messageId;
             item.setAttribute('data-user', userId);
@@ -937,12 +948,6 @@
         }
 
         function addEventItem(platform, clone, classes, userId, messageId) {
-            // Check if message with this ID already exists to prevent duplicates
-            if (messageId && document.getElementById(messageId)) {
-                console.log('[Chat Overlay] Duplicate event detected, skipping:', messageId);
-                return null;
-            }
-
             const item = clone.querySelector('.event');
             item.id = messageId;
             item.setAttribute('data-user', userId);
