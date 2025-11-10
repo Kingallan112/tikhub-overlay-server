@@ -103,13 +103,13 @@
 
             let settings = { ...defaultSettings };
             const defaultGiftImage = 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/1d067d13988e8754ed6adbebd89b9ee8.png~tplv-obj.webp';
-            let topGift = {
+        let topGift = {
                 username: 'Viewer',
                 giftName: 'Gift',
-                giftValue: 0,
+            giftValue: 0,
                 giftImage: defaultGiftImage
-            };
-            let isConnected = false;
+        };
+        let isConnected = false;
 
             const useLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const apiBase = useLocal ? `${window.location.protocol}//${window.location.host}` : 'https://tikhub-overlay-server.onrender.com';
@@ -152,8 +152,8 @@
                 imageEl.style.opacity = opacity;
                 imageEl.style.top = `${settings.giftVerticalOffset}px`;
 
-                updateOverlay();
-            }
+                        updateOverlay();
+                    }
 
             async function loadInitialSettings() {
                 if (useLocal) {
@@ -163,8 +163,8 @@
                         if (data?.settings) {
                             applySettings(data.settings);
                             return;
-                        }
-                    } catch (error) {
+                }
+            } catch (error) {
                         console.warn('[TopGift] Failed to fetch settings from local API:', error);
                     }
                 }
@@ -184,7 +184,7 @@
                 applySettings(fallback);
             }
 
-            function updateOverlay() {
+        function updateOverlay() {
                 const overlay = document.getElementById('giftOverlay');
                 const statusEl = document.getElementById('connectionStatus');
                 const imageEl = document.getElementById('giftImage');
@@ -203,61 +203,71 @@
 
                 overlay.style.display = 'block';
                 statusEl.style.display = isConnected ? 'none' : 'block';
-            }
+        }
 
-            function updateConnectionStatus(message) {
+        function updateConnectionStatus(message) {
                 const statusEl = document.getElementById('connectionStatus');
                 statusEl.textContent = message;
                 statusEl.style.display = 'block';
-                document.getElementById('giftOverlay').style.display = 'none';
-            }
+            document.getElementById('giftOverlay').style.display = 'none';
+        }
 
             function connectWebSocket() {
                 const ws = new WebSocket(wsUrl);
-
-                ws.onopen = () => {
+        
+        ws.onopen = () => {
                     console.log('[TopGift] Connected to overlay WebSocket');
-                    isConnected = true;
+            isConnected = true;
                     updateOverlay();
-                };
+        };
 
-                ws.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
                 if ((data.type === 'gift' || data.type === 'topgift-update') && data.giftData) {
                     const gift = data.giftData;
-                            const giftData = {
-                                username: gift.nickname || gift.username || 'Anonymous',
-                                giftName: gift.giftName || 'Gift',
-                                giftValue: gift.diamondCount || gift.giftValue || 0,
-                                giftImage: gift.giftPictureUrl || gift.giftImage || ''
-                            };
-
+                    const giftData = {
+                        username: gift.nickname || gift.username || 'Anonymous',
+                        giftName: gift.giftName || 'Gift',
+                        giftValue: gift.diamondCount || gift.giftValue || 0,
+                        giftImage: gift.giftPictureUrl || gift.giftImage || ''
+                    };
+                    
                             if (!topGift || giftData.giftValue >= topGift.giftValue) {
-                                topGift = giftData;
-                                updateOverlay();
-                            }
+                        topGift = giftData;
+                        updateOverlay();
+                    }
+                        } else if (data.type === 'topgift-snapshot' && data.top) {
+                            // Snapshot from server: { top: { username, giftName, coins, giftImage } }
+                            const snap = data.top;
+                            topGift = {
+                                username: snap.username || 'Anonymous',
+                                giftName: snap.giftName || 'Gift',
+                                giftValue: Number(snap.coins || snap.giftValue || 0) || 0,
+                                giftImage: snap.giftImage || ''
+                            };
+                            updateOverlay();
                         } else if (data.type === 'topgift-settings-update' && data.settings) {
                             applySettings(data.settings);
                         } else if (data.type === 'topgift-reset') {
                             topGift = { username: 'Viewer', giftName: 'Gift', giftValue: 0, giftImage: '' };
                             updateOverlay();
-                        }
-                    } catch (error) {
+                }
+            } catch (error) {
                         console.error('[TopGift] Error parsing message:', error);
-                    }
-                };
+            }
+        };
 
-                ws.onclose = () => {
+        ws.onclose = () => {
                     console.log('[TopGift] WebSocket disconnected');
-                    isConnected = false;
-                    updateConnectionStatus('Disconnected from stream');
+            isConnected = false;
+            updateConnectionStatus('Disconnected from stream');
                     if (useLocal) {
                         setTimeout(connectWebSocket, RECONNECT_DELAY);
                     }
-                };
+        };
 
-                ws.onerror = (error) => {
+        ws.onerror = (error) => {
                     console.error('[TopGift] WebSocket error:', error);
                     ws.close();
                 };
@@ -268,32 +278,6 @@
                 connectWebSocket();
             });
         })();
-    </script>
-</body>
-</html>
-
-
-            // Apply settings to elements
-            document.getElementById('title').textContent = title;
-            document.getElementById('title').style.fontSize = titleSize + 'px';
-            document.getElementById('username').style.fontSize = usernameSize + 'px';
-            document.getElementById('giftValue').style.fontSize = fontSize + 'px';
-            document.getElementById('title').style.color = titleColor;
-            document.getElementById('username').style.color = usernameColor;
-            document.getElementById('giftValue').style.color = counterColor;
-            
-            // Apply font family to all text elements
-            const textElements = document.querySelectorAll('.title, .username, .gift-value');
-            textElements.forEach(el => {
-                el.style.fontFamily = fontFamily;
-            });
-
-            // Apply gift image opacity
-            document.getElementById('giftImage').style.opacity = giftImageOpacity / 100;
-        }
-
-        // Load settings when page loads
-        loadSettings();
     </script>
 </body>
 </html>
