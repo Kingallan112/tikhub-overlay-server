@@ -29,7 +29,9 @@ const storage = {
         winGoal: new Set(),
         topGift: new Set(),
         topStreak: new Set(),
-        giftVsGift: new Set()
+        giftVsGift: new Set(),
+        // New: Minigame rectangle overlay (triggers grid)
+        minigameRect: new Set()
     },
     
     // Current state for each overlay type
@@ -47,7 +49,9 @@ const storage = {
         topGift: { topGifter: null, gifts: [] },
         topStreak: { topStreaker: null, streaks: [] },
         giftVsGift: { team1: { name: 'Team 1', score: 0 }, team2: { name: 'Team 2', score: 0 } },
-        chatOverlaySettings: null
+        chatOverlaySettings: null,
+        // New: current state for minigame rectangle overlay
+        minigameRect: { triggers: [], config: null }
     },
     
     // Session management
@@ -459,6 +463,28 @@ app.post('/overlay/giftvsgift/update', (req, res) => {
     res.json({ success: true, message: 'Gift vs gift updated' });
 });
 
+// Minigame Rectangle Overlay - triggers grid
+app.post('/overlay/minigame-rect/update', (req, res) => {
+    const { triggers, config } = req.body || {};
+    console.log('🧩 Received minigame rectangle overlay update:', {
+        triggerCount: Array.isArray(triggers) ? triggers.length : 0,
+        hasConfig: !!config
+    });
+
+    storage.state.minigameRect = {
+        triggers: Array.isArray(triggers) ? triggers : [],
+        config: config || null
+    };
+
+    broadcast('minigameRect', {
+        type: 'minigame-rect-update',
+        triggers: storage.state.minigameRect.triggers,
+        config: storage.state.minigameRect.config
+    });
+
+    res.json({ success: true, message: 'Minigame rectangle overlay updated' });
+});
+
 app.get('/api/giftvsgift', (req, res) => {
     const data = storage.state.giftVsGift || {
         leftPoints: 0,
@@ -669,6 +695,9 @@ wss.on('connection', (ws, req) => {
         overlayType = 'topStreak';
     } else if (path.includes('/giftvsgift') || path.includes('/gift-vs-gift')) {
         overlayType = 'giftVsGift';
+    } else if (path.includes('/minigame-rect')) {
+        // New: minigame rectangle triggers overlay
+        overlayType = 'minigameRect';
     }
     
     // Log WebSocket connection
@@ -812,8 +841,8 @@ wss.on('connection', (ws, req) => {
     });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// 404 handler - use bare middleware instead of '*' path to avoid path-to-regexp issues
+app.use((req, res) => {
     res.status(404).json({
         success: false,
         error: "Endpoint not found",
