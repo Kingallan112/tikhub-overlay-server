@@ -48,6 +48,46 @@ const storage = {
         timer: { remaining: 0, isRunning: false },
         topGift: { topGifter: null, gifts: [] },
         topStreak: { topStreaker: null, streaks: [] },
+        topGiftSettings: {
+            fontFamily: 'Comic Sans MS',
+            fontSize: 22,
+            fontLineSpacing: 1.2,
+            fontLetterSpacing: 0,
+            title: 'TOP GIFT',
+            titleSize: 18,
+            titleColor: '#ffffff',
+            usernameColor: '#ffffff',
+            usernameSize: 32,
+            counterColor: '#ffd700',
+            titleVerticalOffset: 20,
+            giftVerticalOffset: 50,
+            usernameVerticalOffset: 125,
+            counterVerticalOffset: 165,
+            enableFontBorder: true,
+            borderColor: '#242424',
+            giftImageVisible: true,
+            giftImageOpacity: 100
+        },
+        topStreakSettings: {
+            fontFamily: 'Comic Sans MS',
+            fontSize: 22,
+            fontLineSpacing: 1.2,
+            fontLetterSpacing: 0,
+            title: 'TOP STREAK',
+            titleSize: 18,
+            titleColor: '#ffffff',
+            usernameColor: '#ffffff',
+            usernameSize: 32,
+            counterColor: '#ffd700',
+            titleVerticalOffset: 20,
+            giftVerticalOffset: 50,
+            usernameVerticalOffset: 125,
+            counterVerticalOffset: 165,
+            enableFontBorder: true,
+            borderColor: '#242424',
+            giftImageVisible: true,
+            giftImageOpacity: 100
+        },
         giftVsGift: { team1: { name: 'Team 1', score: 0 }, team2: { name: 'Team 2', score: 0 } },
         chatOverlaySettings: null,
         // New: current state for minigame rectangle overlay
@@ -519,6 +559,37 @@ app.post('/api/giftvsgift', (req, res) => {
     res.json({ success: true, message: 'Gift vs gift config saved' });
 });
 
+// Top Gift / Top Streak settings APIs
+app.get('/api/topgift-settings', (_req, res) => {
+    res.json({ success: true, settings: storage.state.topGiftSettings });
+});
+
+app.post('/api/topgift-settings', (req, res) => {
+    try {
+        storage.state.topGiftSettings = { ...storage.state.topGiftSettings, ...req.body };
+        broadcast('topGift', { type: 'topgift-settings-update', settings: storage.state.topGiftSettings });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Overlay Server] Failed to save top gift settings:', error);
+        res.status(500).json({ success: false, error: 'Failed to save settings' });
+    }
+});
+
+app.get('/api/topstreak-settings', (_req, res) => {
+    res.json({ success: true, settings: storage.state.topStreakSettings });
+});
+
+app.post('/api/topstreak-settings', (req, res) => {
+    try {
+        storage.state.topStreakSettings = { ...storage.state.topStreakSettings, ...req.body };
+        broadcast('topStreak', { type: 'topstreak-settings-update', settings: storage.state.topStreakSettings });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Overlay Server] Failed to save top streak settings:', error);
+        res.status(500).json({ success: false, error: 'Failed to save settings' });
+    }
+});
+
 // Generic event broadcast (for any TikTok event)
 app.post('/broadcast-event', (req, res) => {
     const { event, data } = req.body;
@@ -715,6 +786,20 @@ wss.on('connection', (ws, req) => {
                 ws.send(JSON.stringify({ type: 'initial-state', state: currentState }));
             } catch (error) {
                 console.error('Failed to send initial state:', error);
+            }
+        }
+
+        if (overlayType === 'topGift') {
+            try {
+                ws.send(JSON.stringify({ type: 'topgift-settings-update', settings: storage.state.topGiftSettings }));
+            } catch (error) {
+                console.error('[Overlay Server] Failed to send top gift settings on connect:', error);
+            }
+        } else if (overlayType === 'topStreak') {
+            try {
+                ws.send(JSON.stringify({ type: 'topstreak-settings-update', settings: storage.state.topStreakSettings }));
+            } catch (error) {
+                console.error('[Overlay Server] Failed to send top streak settings on connect:', error);
             }
         }
     }
