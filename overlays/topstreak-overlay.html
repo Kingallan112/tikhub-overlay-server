@@ -111,9 +111,9 @@
             let isConnected = false;
 
             const useLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiBase = useLocal ? `${window.location.protocol}//${window.location.host}` : 'https://tikhub-overlay-server.onrender.com';
+            const apiBase = useLocal ? `${window.location.protocol}//${window.location.host}` : 'https://overlay.tikhub.site';
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = useLocal ? `${wsProtocol}//${window.location.host}/ws/topstreak` : 'wss://tikhub-overlay-server.onrender.com/ws/topstreak';
+            const wsUrl = useLocal ? `${wsProtocol}//${window.location.host}/ws/topstreak` : 'wss://overlay.tikhub.site/ws/topstreak';
             const RECONNECT_DELAY = 4000;
 
             function applySettings(newSettings) {
@@ -198,7 +198,9 @@
                 }
 
                 usernameEl.textContent = topStreak.username;
-                valueEl.textContent = `x${topStreak.streakValue.toLocaleString()}`;
+                const baseCount = `x${Number(topStreak.streakValue || 0).toLocaleString()}`;
+                const valueSuffix = topStreak.totalValue ? ` • ${Number(topStreak.totalValue).toLocaleString()} coins` : '';
+                valueEl.textContent = `${baseCount}${valueSuffix}`;
 
                 overlay.style.display = 'block';
                 statusEl.style.display = isConnected ? 'none' : 'block';
@@ -224,30 +226,29 @@
                     try {
                         const data = JSON.parse(event.data);
                 if ((data.type === 'streak' || data.type === 'topstreak-update') && data.streakData) {
-                            const streak = data.streakData;
-                            const streakData = {
-                                username: streak.nickname || streak.username || 'Anonymous',
-                                streakValue: streak.combo || streak.streakValue || 0,
-                                streakImage: streak.giftPictureUrl || streak.giftImage || ''
-                            };
-
-                            if (!topStreak || streakData.streakValue >= topStreak.streakValue) {
-                                topStreak = streakData;
-                                updateOverlay();
-                            }
-                        } else if (data.type === 'topstreak-snapshot' && data.top) {
-                            // Snapshot from server: { top: { username, giftName, combo, giftImage } }
-                            const snap = data.top;
-                            topStreak = {
-                                username: snap.username || 'Anonymous',
-                                streakValue: Number(snap.combo || snap.streakValue || 0) || 0,
-                                streakImage: snap.giftImage || ''
-                            };
-                            updateOverlay();
-                        } else if (data.type === 'topstreak-settings-update' && data.settings) {
+                    const streak = data.streakData;
+                    const streakData = {
+                        username: streak.nickname || streak.username || 'Anonymous',
+                        streakValue: streak.combo || streak.streakValue || 0,
+                        streakImage: streak.giftPictureUrl || streak.giftImage || '',
+                        totalValue: Number(streak.totalValue || 0)
+                    };
+                    topStreak = streakData;
+                    updateOverlay();
+                } else if (data.type === 'topstreak-snapshot' && data.top) {
+                    // Snapshot from server: { top: { username, giftName, combo, giftImage } }
+                    const snap = data.top;
+                    topStreak = {
+                        username: snap.username || 'Anonymous',
+                        streakValue: Number(snap.combo || snap.streakValue || 0) || 0,
+                        streakImage: snap.giftImage || '',
+                        totalValue: Number(snap.totalValue || 0)
+                    };
+                    updateOverlay();
+                } else if (data.type === 'topstreak-settings-update' && data.settings) {
                             applySettings(data.settings);
                         } else if (data.type === 'topstreak-reset') {
-                            topStreak = { username: 'Viewer', streakValue: 0, streakImage: '' };
+                            topStreak = { username: 'Viewer', streakValue: 0, streakImage: '', totalValue: 0 };
                             updateOverlay();
                         }
                     } catch (error) {
