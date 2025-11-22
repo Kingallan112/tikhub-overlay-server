@@ -171,6 +171,41 @@ const GiftVsGiftOverlay = ({ editor = false, actions = [], triggerAction, refres
                         console.log(`[GiftVsGift] No match found for gift: ${giftName}`);
                     }
                 }
+                // Handle gift-vs-gift update/config messages
+                else if (data.type === 'gift-vs-gift-update' || data.type === 'gift-vs-gift-config') {
+                    console.log(`🔔 [GiftVsGift Browser Overlay] Received ${data.type} from server:`, data);
+                    // Update goal if present
+                    if (data.goal !== undefined) {
+                        console.log(`🎯 [GiftVsGift Browser Overlay] RECEIVED GOAL UPDATE via WebSocket!`);
+                        console.log(`🎯 [GiftVsGift Browser Overlay] Old goal: ${goal}`);
+                        setGoal(data.goal);
+                    }
+                    // Update goal behavior if present
+                    if (data.goalBehavior) {
+                        console.log(`[GiftVsGift] ✅ Updating goal behavior from WebSocket: ${data.goalBehavior}`);
+                        setGoalBehavior(data.goalBehavior);
+                    }
+                    // Update left gift if present
+                    if (data.left) {
+                        const leftGiftObj = availableGifts_generated_1.availableGifts.find(g => g.name.toLowerCase() === (data.left.name || '').toLowerCase());
+                        setLeftGift(leftGiftObj || {
+                            id: data.left.id || data.left.name,
+                            name: data.left.name,
+                            image: data.left.image,
+                            coins: data.left.coins || 0
+                        });
+                    }
+                    // Update right gift if present
+                    if (data.right) {
+                        const rightGiftObj = availableGifts_generated_1.availableGifts.find(g => g.name.toLowerCase() === (data.right.name || '').toLowerCase());
+                        setRightGift(rightGiftObj || {
+                            id: data.right.id || data.right.name,
+                            name: data.right.name,
+                            image: data.right.image,
+                            coins: data.right.coins || 0
+                        });
+                    }
+                }
             }
             catch (error) {
                 console.error('[GiftVsGift] Error processing WebSocket message:', error);
