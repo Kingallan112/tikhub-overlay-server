@@ -24,7 +24,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 300px;
-            height: 200px;
+            height: 240px;
             background: transparent;
             color: #fff;
         }
@@ -52,9 +52,9 @@
             text-shadow: 2px 2px 0px #242424;
             z-index: 2;
         }
-        .title { top: 20px; font-size: 18px; }
-        .username { top: 125px; font-size: 32px; }
-        .gift-value { top: 165px; font-size: 22px; }
+        .title { top: 40px; font-size: 18px; }
+        .username { top: 175px; font-size: 32px; }
+        .gift-value { top: 215px; font-size: 22px; }
         .connection-status {
             position: absolute;
             top: 50%;
@@ -91,10 +91,10 @@
                 usernameColor: '#ffffff',
                 usernameSize: 32,
                 counterColor: '#ffd700',
-                titleVerticalOffset: 20,
+                titleVerticalOffset: 40,
                 giftVerticalOffset: 50,
-                usernameVerticalOffset: 125,
-                counterVerticalOffset: 165,
+                usernameVerticalOffset: 175,
+                counterVerticalOffset: 215,
                 enableFontBorder: true,
                 borderColor: '#242424',
                 giftImageVisible: true,
@@ -112,9 +112,9 @@
         let isConnected = false;
 
             const useLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiBase = useLocal ? `${window.location.protocol}//${window.location.host}` : 'https://tikhub-overlay-server.onrender.com';
+            const apiBase = useLocal ? `${window.location.protocol}//${window.location.host}` : 'https://overlay.tikhub.site';
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = useLocal ? `${wsProtocol}//${window.location.host}/ws/topgift` : 'wss://tikhub-overlay-server.onrender.com/ws/topgift';
+            const wsUrl = useLocal ? `${wsProtocol}//${window.location.host}/ws/topgift` : 'wss://overlay.tikhub.site/ws/topgift';
             const RECONNECT_DELAY = 4000;
 
             function applySettings(newSettings) {
