@@ -111,9 +111,9 @@
             let isConnected = false;
 
             const useLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiBase = useLocal ? `${window.location.protocol}//${window.location.host}` : 'https://overlay.tikhub.site';
+            const apiBase = useLocal ? `${window.location.protocol}//${window.location.host}` : 'https://tikhub-overlay-server.onrender.com';
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = useLocal ? `${wsProtocol}//${window.location.host}/ws/topstreak` : 'wss://overlay.tikhub.site/ws/topstreak';
+            const wsUrl = useLocal ? `${wsProtocol}//${window.location.host}/ws/topstreak` : 'wss://tikhub-overlay-server.onrender.com/ws/topstreak';
             const RECONNECT_DELAY = 4000;
 
             function applySettings(newSettings) {
@@ -236,7 +236,6 @@
                     topStreak = streakData;
                     updateOverlay();
                 } else if (data.type === 'topstreak-snapshot' && data.top) {
-                    // Snapshot from server: { top: { username, giftName, combo, giftImage } }
                     const snap = data.top;
                     topStreak = {
                         username: snap.username || 'Anonymous',
@@ -276,6 +275,26 @@
                 connectWebSocket();
             });
         })();
+    </script>
+</body>
+</html>
+
+            document.getElementById('title').style.color = titleColor;
+            document.getElementById('username').style.color = usernameColor;
+            document.getElementById('streakCount').style.color = counterColor;
+            
+            // Apply font family to all text elements
+            const textElements = document.querySelectorAll('.title, .username, .streak-count');
+            textElements.forEach(el => {
+                el.style.fontFamily = fontFamily;
+            });
+
+            // Apply gift image opacity
+            document.getElementById('giftImage').style.opacity = giftImageOpacity / 100;
+        }
+
+        // Load settings when page loads
+        loadSettings();
     </script>
 </body>
 </html>
